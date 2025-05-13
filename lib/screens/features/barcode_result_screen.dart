@@ -5,16 +5,39 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
+import '../../utils/qr_history_helper.dart';
 
-class BarcodeResultScreen extends StatelessWidget {
-  final String text;
+class BarcodeResultScreen extends StatefulWidget {
+  final String content;
   final String type;
 
   const BarcodeResultScreen({
     Key? key,
-    required this.text,
+    required this.content,
     required this.type,
   }) : super(key: key);
+
+  @override
+  _BarcodeResultScreenState createState() => _BarcodeResultScreenState();
+}
+
+class _BarcodeResultScreenState extends State<BarcodeResultScreen> {
+  String get barcodeData => widget.content;
+
+  @override
+  void initState() {
+    super.initState();
+    QRHistoryHelper.saveQRToHistoryAfterBuild(
+      context,
+      title: 'Barcode',
+      content: '${widget.type}: ${widget.content}',
+      iconPath: 'assets/icons/barcode.png',
+      additionalData: {
+        'type': widget.type,
+        'content': widget.content,
+      },
+    );
+  }
 
   Future<void> _saveQRImage(BuildContext context, GlobalKey qrKey) async {
     try {
@@ -105,7 +128,7 @@ class BarcodeResultScreen extends StatelessWidget {
                 child: RepaintBoundary(
                   key: qrKey,
                   child: QrImageView(
-                    data: text,
+                    data: barcodeData,
                     version: QrVersions.auto,
                     size: 200.0,
                     backgroundColor: Colors.white,
@@ -124,12 +147,12 @@ class BarcodeResultScreen extends StatelessWidget {
                   _buildActionButton(
                     icon: Icons.qr_code,
                     label: 'Share Barcode',
-                    onTap: () => Share.share(text),
+                    onTap: () => Share.share(barcodeData),
                   ),
                   _buildActionButton(
                     icon: Icons.share,
                     label: 'Share Text',
-                    onTap: () => Share.share(text),
+                    onTap: () => Share.share(barcodeData),
                   ),
                 ],
               ),
@@ -143,7 +166,7 @@ class BarcodeResultScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
-                      'Type: $type\nText: $text',
+                      'Type: ${widget.type}\nText: $barcodeData',
                       style: TextStyle(fontSize: 16),
                     ),
                   ],

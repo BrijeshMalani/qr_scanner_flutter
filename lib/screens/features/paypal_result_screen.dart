@@ -6,19 +6,54 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
+import '../../utils/qr_history_helper.dart';
 
-class PaypalResultScreen extends StatelessWidget {
-  final String paypalMe;
+class PayPalResultScreen extends StatefulWidget {
+  final String paypalEmail;
+  final double? amount;
+  final String? currency;
+  final String? note;
 
-  const PaypalResultScreen({
+  const PayPalResultScreen({
     Key? key,
-    required this.paypalMe,
+    required this.paypalEmail,
+    this.amount,
+    this.currency,
+    this.note,
   }) : super(key: key);
 
-  String get paypalUrl => 'https://www.paypal.me/$paypalMe';
+  @override
+  _PayPalResultScreenState createState() => _PayPalResultScreenState();
+}
+
+class _PayPalResultScreenState extends State<PayPalResultScreen> {
+  String get paypalData {
+    String url = 'https://paypal.me/${widget.paypalEmail}';
+    if (widget.amount != null) {
+      url += '/${widget.amount}${widget.currency ?? 'USD'}';
+    }
+    return url;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    QRHistoryHelper.saveQRToHistoryAfterBuild(
+      context,
+      title: 'PayPal',
+      content: widget.paypalEmail,
+      iconPath: 'assets/icons/paypal.png',
+      additionalData: {
+        'email': widget.paypalEmail,
+        'amount': widget.amount,
+        'currency': widget.currency,
+        'note': widget.note,
+      },
+    );
+  }
 
   Future<void> _launchPaypal() async {
-    final uri = Uri.parse(paypalUrl);
+    final uri = Uri.parse(paypalData);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }
@@ -113,7 +148,7 @@ class PaypalResultScreen extends StatelessWidget {
                 child: RepaintBoundary(
                   key: qrKey,
                   child: QrImageView(
-                    data: paypalUrl,
+                    data: paypalData,
                     version: QrVersions.auto,
                     size: 200.0,
                     backgroundColor: Colors.white,
@@ -132,12 +167,12 @@ class PaypalResultScreen extends StatelessWidget {
                   _buildActionButton(
                     icon: Icons.qr_code,
                     label: 'Share QR Code',
-                    onTap: () => Share.share(paypalUrl),
+                    onTap: () => Share.share(paypalData),
                   ),
                   _buildActionButton(
                     icon: Icons.share,
                     label: 'Share Text',
-                    onTap: () => Share.share(paypalUrl),
+                    onTap: () => Share.share(paypalData),
                   ),
                 ],
               ),
@@ -153,7 +188,7 @@ class PaypalResultScreen extends StatelessWidget {
                     InkWell(
                       onTap: _launchPaypal,
                       child: Text(
-                        paypalUrl,
+                        paypalData,
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.blue,

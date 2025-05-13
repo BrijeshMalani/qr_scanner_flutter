@@ -24,17 +24,18 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon:
+              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Barcode',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
         centerTitle: true,
       ),
@@ -48,12 +49,12 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: Colors.indigo.shade100,
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Icon(
                   Icons.qr_code,
-                  color: Colors.indigo,
+                  color: Theme.of(context).primaryColor,
                   size: 40,
                 ),
               ),
@@ -63,41 +64,77 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                 ),
               ),
               SizedBox(height: 40),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: _barcodeTypes
-                      .map((type) => RadioListTile(
-                            title: Text(type),
-                            value: type,
-                            groupValue: _selectedType,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedType = value.toString();
-                              });
-                            },
-                          ))
-                      .toList(),
-                ),
-              ),
-              SizedBox(height: 20),
-              TextField(
-                controller: _textController,
+              DropdownButtonFormField<String>(
+                value: _selectedType,
                 decoration: InputDecoration(
-                  labelText: 'Text',
+                  labelText: 'Barcode Type',
+                  labelStyle: TextStyle(
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).dividerColor,
+                    ),
                   ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ),
+                items: _barcodeTypes.map((String type) {
+                  return DropdownMenuItem<String>(
+                    value: type,
+                    child: Text(
+                      type,
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedType = newValue!;
+                  });
+                },
+                dropdownColor: Theme.of(context).cardColor,
+              ),
+              SizedBox(height: 20),
+              TextField(
+                controller: _textController,
+                decoration: InputDecoration(
+                  labelText: 'Content',
+                  labelStyle: TextStyle(
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).dividerColor,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ),
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
               SizedBox(height: 40),
@@ -106,12 +143,13 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                 height: 55,
                 child: ElevatedButton(
                   onPressed: () {
-                    if (_textController.text.isNotEmpty) {
+                    final content = _textController.text.trim();
+                    if (content.isNotEmpty) {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => BarcodeResultScreen(
-                            text: _textController.text,
+                            content: content,
                             type: _selectedType,
                           ),
                         ),
@@ -119,13 +157,14 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Please enter text for the barcode'),
+                          content: Text('Please enter content'),
+                          backgroundColor: Theme.of(context).colorScheme.error,
                         ),
                       );
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Theme.of(context).primaryColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -133,6 +172,8 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                   child: Text(
                     'Create',
                     style: TextStyle(
+                      color:
+                          Theme.of(context).primaryTextTheme.labelLarge?.color,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),

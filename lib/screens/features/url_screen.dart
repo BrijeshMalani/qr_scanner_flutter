@@ -22,17 +22,18 @@ class _UrlScreenState extends State<UrlScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon:
+              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'URL',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
         centerTitle: true,
       ),
@@ -46,12 +47,12 @@ class _UrlScreenState extends State<UrlScreen> {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade100,
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Icon(
-                  Icons.language,
-                  color: Colors.blue,
+                  Icons.link,
+                  color: Theme.of(context).primaryColor,
                   size: 40,
                 ),
               ),
@@ -61,22 +62,38 @@ class _UrlScreenState extends State<UrlScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                 ),
               ),
               SizedBox(height: 40),
               TextField(
                 controller: _urlController,
                 decoration: InputDecoration(
-                  labelText: 'URL',
-                  hintText: 'https://example.com',
+                  hintText: 'Enter URL',
+                  hintStyle: TextStyle(
+                      color: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.color
+                          ?.withOpacity(0.5)),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).dividerColor,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
                 ),
+                style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color),
               ),
               SizedBox(height: 40),
               SizedBox(
@@ -89,21 +106,20 @@ class _UrlScreenState extends State<UrlScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => UrlResultScreen(
-                            url: url,
-                          ),
+                          builder: (context) => URLResultScreen(url: url),
                         ),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Please enter a valid URL'),
+                          backgroundColor: Theme.of(context).colorScheme.error,
                         ),
                       );
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Theme.of(context).primaryColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -111,6 +127,8 @@ class _UrlScreenState extends State<UrlScreen> {
                   child: Text(
                     'Create',
                     style: TextStyle(
+                      color:
+                          Theme.of(context).primaryTextTheme.labelLarge?.color,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),

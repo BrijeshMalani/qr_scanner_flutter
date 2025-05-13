@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'contact_screen.dart';
+import 'email_screen.dart';
 import 'features/location_screen.dart';
 import 'features/notes_screen.dart';
 import 'features/wifi_screen.dart';
@@ -6,10 +8,23 @@ import 'features/event_screen.dart';
 import 'features/url_screen.dart';
 import 'features/paypal_screen.dart';
 import 'features/barcode_screen.dart';
+import '../utils/colors.dart';
+import 'sms_screen.dart';
+import 'social/instagram_screen.dart';
+import 'social/spotify_screen.dart';
+import 'social/facebook_screen.dart';
+import 'social/whatsapp_screen.dart';
+import 'social/youtube_screen.dart';
+import 'social/twitter_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   Widget _buildFeatureItem(
       IconData icon, String label, Color color, VoidCallback onTap) {
     return InkWell(
@@ -35,8 +50,136 @@ class HomeScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
             textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSocialItem(String title, String imagePath) {
+    return InkWell(
+      onTap: () {
+        switch (title) {
+          case 'Instagram':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => InstagramScreen()),
+            );
+            break;
+          case 'Spotify':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SpotifyScreen()),
+            );
+            break;
+          case 'Facebook':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => FacebookScreen()),
+            );
+            break;
+          case 'WhatsApp':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => WhatsAppScreen()),
+            );
+            break;
+          case 'Youtube':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => YoutubeScreen()),
+            );
+            break;
+          case 'Twitter':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => TwitterScreen()),
+            );
+            break;
+        }
+      },
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardTheme.color,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).shadowColor.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Image.asset(
+              imagePath,
+              width: 24,
+              height: 24,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPopularItem(
+      String title, String subtitle, IconData icon, Color backgroundColor) {
+    return Container(
+      width: 160,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).shadowColor.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: backgroundColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: backgroundColor),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.titleLarge?.color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+            ),
           ),
         ],
       ),
@@ -46,18 +189,14 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         title: Text(
-          'Create QR Code',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
+          'QR & Barcode Scanner',
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
-        centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -134,6 +273,111 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Popular',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.titleLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => ContactScreen()),
+                            );
+                          },
+                          child: _buildPopularItem(
+                            'Share Contact',
+                            'Share your contact info',
+                            Icons.person,
+                            Colors.pink,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => SMSScreen()),
+                            );
+                          },
+                          child: _buildPopularItem(
+                            'Send SMS',
+                            'Send SMS Message Anytime',
+                            Icons.message,
+                            Colors.blue,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => EmailScreen()),
+                            );
+                          },
+                          child: _buildPopularItem(
+                            'Send Email',
+                            'Send Email AddressAnytime',
+                            Icons.email,
+                            Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Social Section
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Social',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.titleLarge?.color,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 4,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    children: [
+                      _buildSocialItem('Twitter', 'assets/icons/twitter.png'),
+                      _buildSocialItem(
+                          'Instagram', 'assets/icons/instagram.png'),
+                      _buildSocialItem('Facebook', 'assets/icons/facebook.png'),
+                      _buildSocialItem('WhatsApp', 'assets/icons/whatsapp.png'),
+                      _buildSocialItem('Youtube', 'assets/icons/youtube.png'),
+                      _buildSocialItem('Spotify', 'assets/icons/spotify.png'),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),

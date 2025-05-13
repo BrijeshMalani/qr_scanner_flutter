@@ -5,33 +5,58 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
+import '../../utils/qr_history_helper.dart';
 
-class EventResultScreen extends StatelessWidget {
-  final String eventName;
-  final DateTime startDate;
-  final DateTime endDate;
+class EventResultScreen extends StatefulWidget {
+  final String title;
   final String location;
   final String description;
+  final DateTime startDate;
+  final DateTime endDate;
 
   const EventResultScreen({
     Key? key,
-    required this.eventName,
-    required this.startDate,
-    required this.endDate,
+    required this.title,
     required this.location,
     required this.description,
+    required this.startDate,
+    required this.endDate,
   }) : super(key: key);
 
-  String get eventString {
-    final start = startDate.toIso8601String();
-    final end = endDate.toIso8601String();
-    return 'BEGIN:VEVENT\n'
-        'SUMMARY:$eventName\n'
-        'DTSTART:${start.replaceAll(RegExp(r'[-:]'), '').split('.')[0]}Z\n'
-        'DTEND:${end.replaceAll(RegExp(r'[-:]'), '').split('.')[0]}Z\n'
-        'LOCATION:$location\n'
-        'DESCRIPTION:$description\n'
-        'END:VEVENT';
+  @override
+  _EventResultScreenState createState() => _EventResultScreenState();
+}
+
+class _EventResultScreenState extends State<EventResultScreen> {
+  String get eventData => '''BEGIN:VEVENT
+SUMMARY:${widget.title}
+LOCATION:${widget.location}
+DESCRIPTION:${widget.description}
+DTSTART:${_formatDateTime(widget.startDate)}
+DTEND:${_formatDateTime(widget.endDate)}
+END:VEVENT''';
+
+  String _formatDateTime(DateTime dt) {
+    return dt.toIso8601String().replaceAll(RegExp(r'[-:]'), '').split('.')[0] +
+        'Z';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    QRHistoryHelper.saveQRToHistoryAfterBuild(
+      context,
+      title: 'Event',
+      content: widget.title,
+      iconPath: 'assets/icons/event.png',
+      additionalData: {
+        'title': widget.title,
+        'location': widget.location,
+        'description': widget.description,
+        'startDate': widget.startDate.toIso8601String(),
+        'endDate': widget.endDate.toIso8601String(),
+      },
+    );
   }
 
   Future<void> _saveQRImage(BuildContext context, GlobalKey qrKey) async {
@@ -145,7 +170,7 @@ class EventResultScreen extends StatelessWidget {
                 child: RepaintBoundary(
                   key: qrKey,
                   child: QrImageView(
-                    data: eventString,
+                    data: eventData,
                     version: QrVersions.auto,
                     size: 200.0,
                     backgroundColor: Colors.white,
@@ -164,17 +189,17 @@ class EventResultScreen extends StatelessWidget {
                   _buildActionButton(
                     icon: Icons.qr_code,
                     label: 'Share QR Code',
-                    onTap: () => Share.share(eventString),
+                    onTap: () => Share.share(eventData),
                   ),
                   _buildActionButton(
                     icon: Icons.share,
                     label: 'Share Text',
                     onTap: () => Share.share(
-                      'Event Name: $eventName\n'
-                      'Starting Date: ${_formatDate(startDate)}\n'
-                      'Ending Date: ${_formatDate(endDate)}\n'
-                      'Location: $location\n'
-                      'Description: $description',
+                      'Event Name: ${widget.title}\n'
+                      'Starting Date: ${_formatDate(widget.startDate)}\n'
+                      'Ending Date: ${_formatDate(widget.endDate)}\n'
+                      'Location: ${widget.location}\n'
+                      'Description: ${widget.description}',
                     ),
                   ),
                 ],
@@ -189,11 +214,11 @@ class EventResultScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
-                      'Event Name: $eventName\n'
-                      'Starting Date: ${_formatDate(startDate)}\n'
-                      'Ending Date: ${_formatDate(endDate)}\n'
-                      'Location: $location\n'
-                      'Description: $description',
+                      'Event Name: ${widget.title}\n'
+                      'Starting Date: ${_formatDate(widget.startDate)}\n'
+                      'Ending Date: ${_formatDate(widget.endDate)}\n'
+                      'Location: ${widget.location}\n'
+                      'Description: ${widget.description}',
                       style: TextStyle(fontSize: 16),
                     ),
                   ],

@@ -34,7 +34,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           Expanded(
@@ -54,19 +54,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       Icon(
                         page['icon'],
                         size: 120,
-                        color: Colors.blueAccent,
+                        color: Theme.of(context).primaryColor,
                       ),
                       SizedBox(height: 32),
                       Text(
                         page['title'],
                         style: TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.bold),
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).textTheme.titleLarge?.color,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 16),
                       Text(
                         page['subtitle'],
-                        style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -85,8 +91,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 height: 8,
                 decoration: BoxDecoration(
                   color: _currentPage == index
-                      ? Colors.blueAccent
-                      : Colors.grey[300],
+                      ? Theme.of(context).primaryColor
+                      : Theme.of(context).disabledColor,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -99,10 +105,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
+                  backgroundColor: Theme.of(context).primaryColor,
                   padding: EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30)),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
                 ),
                 onPressed: () {
                   if (_currentPage == _pages.length - 1) {
@@ -112,13 +119,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     );
                   } else {
                     _controller.nextPage(
-                        duration: Duration(milliseconds: 300),
-                        curve: Curves.easeIn);
+                      duration: Duration(milliseconds: 300),
+                      curve: Curves.easeIn,
+                    );
                   }
                 },
                 child: Text(
                   _currentPage == _pages.length - 1 ? 'Get Started' : 'Next',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(
+                    color: Theme.of(context).primaryTextTheme.labelLarge?.color,
+                  ),
                 ),
               ),
             ),

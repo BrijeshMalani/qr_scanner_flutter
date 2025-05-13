@@ -89,8 +89,11 @@ class _PaypalScreenState extends State<PaypalScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => PaypalResultScreen(
-                            paypalMe: paypalMe,
+                          builder: (context) => PayPalResultScreen(
+                            paypalEmail: paypalMe,
+                            amount: null,
+                            currency: null,
+                            note: null,
                           ),
                         ),
                       );
@@ -111,6 +114,7 @@ class _PaypalScreenState extends State<PaypalScreen> {
                   child: Text(
                     'Create',
                     style: TextStyle(
+                      color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),

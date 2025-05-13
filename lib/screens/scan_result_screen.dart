@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
+import '../services/service_provider.dart';
+import '../models/history_item.dart';
 
-class ScanResultScreen extends StatelessWidget {
+class ScanResultScreen extends StatefulWidget {
   final String scannedCode;
   final File? qrImage;
 
@@ -14,7 +16,32 @@ class ScanResultScreen extends StatelessWidget {
     this.qrImage,
   }) : super(key: key);
 
-  bool get isUrl => Uri.tryParse(scannedCode)?.hasScheme ?? false;
+  @override
+  _ScanResultScreenState createState() => _ScanResultScreenState();
+}
+
+class _ScanResultScreenState extends State<ScanResultScreen> {
+  bool get isUrl => Uri.tryParse(widget.scannedCode)?.hasScheme ?? false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _saveToHistory();
+    });
+  }
+
+  Future<void> _saveToHistory() async {
+    final historyService = ServiceProvider.of(context).historyService;
+    final historyItem = HistoryItem(
+      type: 'scanned',
+      title: isUrl ? 'URL QR Code' : 'Text QR Code',
+      subtitle: widget.scannedCode,
+      date: DateTime.now().toString(),
+      iconPath: 'assets/icons/qr_code.png',
+    );
+    await historyService.addItem(historyItem);
+  }
 
   Widget _buildQrPreview() {
     return Container(
@@ -43,8 +70,8 @@ class ScanResultScreen extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: qrImage != null
-                  ? Image.file(qrImage!, fit: BoxFit.cover)
+              child: widget.qrImage != null
+                  ? Image.file(widget.qrImage!, fit: BoxFit.cover)
                   : Icon(Icons.qr_code_2, size: 100, color: Colors.grey[400]),
             ),
           ),
@@ -100,7 +127,7 @@ class ScanResultScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  scannedCode,
+                  widget.scannedCode,
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.blue[700],
@@ -206,7 +233,7 @@ class ScanResultScreen extends StatelessWidget {
                         'Open',
                         () async {
                           if (isUrl) {
-                            final url = Uri.parse(scannedCode);
+                            final url = Uri.parse(widget.scannedCode);
                             if (await canLaunchUrl(url)) {
                               await launchUrl(url);
                             }
@@ -217,7 +244,8 @@ class ScanResultScreen extends StatelessWidget {
                         Icons.copy,
                         'Copy',
                         () {
-                          Clipboard.setData(ClipboardData(text: scannedCode));
+                          Clipboard.setData(
+                              ClipboardData(text: widget.scannedCode));
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Copied to clipboard'),
@@ -229,7 +257,7 @@ class ScanResultScreen extends StatelessWidget {
                       _buildActionButton(
                         Icons.share,
                         'Share',
-                        () => Share.share(scannedCode),
+                        () => Share.share(widget.scannedCode),
                       ),
                     ],
                   ),

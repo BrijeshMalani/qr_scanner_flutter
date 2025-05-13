@@ -2,65 +2,59 @@ import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'scanner_screen.dart';
 import 'settings_screen.dart';
+import 'history_screen.dart';
 
 class MainScreen extends StatefulWidget {
+  const MainScreen({Key? key}) : super(key: key);
+
   @override
-  _MainScreenState createState() => _MainScreenState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+  int _selectedIndex = 0;
 
   final List<Widget> _screens = [
     HomeScreen(),
-    const SizedBox(), // B-Card placeholder
     ScannerScreen(),
-    const SizedBox(), // History placeholder
+    HistoryScreen(),
     SettingsScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: _screens[_selectedIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
+          color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Theme.of(context).shadowColor.withOpacity(0.1),
+              spreadRadius: 1,
               blurRadius: 10,
-              offset: Offset(0, -5),
+              offset: const Offset(0, -3),
             ),
           ],
         ),
         child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
+          currentIndex: _selectedIndex,
+          onTap: (index) => setState(() => _selectedIndex = index),
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: Colors.blue[700],
-          unselectedItemColor: Colors.grey,
+          backgroundColor:
+              Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+          selectedItemColor:
+              Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
+          unselectedItemColor:
+              Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
           items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.add_circle_outline),
-              label: 'Create',
+              icon: Icon(Icons.home),
+              label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.credit_card),
-              label: 'B-Card',
-            ),
-            BottomNavigationBarItem(
-              icon: Container(
-                height: 56,
-                width: 56,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.blue[700],
-                ),
-                child:
-                    Icon(Icons.qr_code_scanner, color: Colors.white, size: 32),
-              ),
-              label: '',
+              icon: Icon(Icons.qr_code_scanner),
+              label: 'Scan',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.history),

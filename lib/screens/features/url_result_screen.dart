@@ -6,17 +6,34 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
+import '../../utils/qr_history_helper.dart';
 
-class UrlResultScreen extends StatelessWidget {
+class URLResultScreen extends StatefulWidget {
   final String url;
 
-  const UrlResultScreen({
+  const URLResultScreen({
     Key? key,
     required this.url,
   }) : super(key: key);
 
+  @override
+  _URLResultScreenState createState() => _URLResultScreenState();
+}
+
+class _URLResultScreenState extends State<URLResultScreen> {
+  @override
+  void initState() {
+    super.initState();
+    QRHistoryHelper.saveQRToHistoryAfterBuild(
+      context,
+      title: 'URL',
+      content: widget.url,
+      iconPath: 'assets/icons/url.png',
+    );
+  }
+
   Future<void> _launchUrl() async {
-    final uri = Uri.parse(url);
+    final uri = Uri.parse(widget.url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }
@@ -111,7 +128,7 @@ class UrlResultScreen extends StatelessWidget {
                 child: RepaintBoundary(
                   key: qrKey,
                   child: QrImageView(
-                    data: url,
+                    data: widget.url,
                     version: QrVersions.auto,
                     size: 200.0,
                     backgroundColor: Colors.white,
@@ -130,12 +147,12 @@ class UrlResultScreen extends StatelessWidget {
                   _buildActionButton(
                     icon: Icons.qr_code,
                     label: 'Share QR Code',
-                    onTap: () => Share.share(url),
+                    onTap: () => Share.share(widget.url),
                   ),
                   _buildActionButton(
                     icon: Icons.share,
                     label: 'Share Text',
-                    onTap: () => Share.share(url),
+                    onTap: () => Share.share(widget.url),
                   ),
                 ],
               ),
@@ -151,7 +168,7 @@ class UrlResultScreen extends StatelessWidget {
                     InkWell(
                       onTap: _launchUrl,
                       child: Text(
-                        url,
+                        widget.url,
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.blue,

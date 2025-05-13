@@ -5,16 +5,43 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
+import '../../utils/qr_history_helper.dart';
 
-class LocationResultScreen extends StatelessWidget {
-  final String latitude;
-  final String longitude;
+class LocationResultScreen extends StatefulWidget {
+  final double latitude;
+  final double longitude;
+  final String? address;
 
   const LocationResultScreen({
     Key? key,
     required this.latitude,
     required this.longitude,
+    this.address,
   }) : super(key: key);
+
+  @override
+  _LocationResultScreenState createState() => _LocationResultScreenState();
+}
+
+class _LocationResultScreenState extends State<LocationResultScreen> {
+  String get locationData => 'geo:${widget.latitude},${widget.longitude}';
+
+  @override
+  void initState() {
+    super.initState();
+    QRHistoryHelper.saveQRToHistoryAfterBuild(
+      context,
+      title: 'Location',
+      content: widget.address ??
+          'Lat: ${widget.latitude}, Long: ${widget.longitude}',
+      iconPath: 'assets/icons/location.png',
+      additionalData: {
+        'latitude': widget.latitude,
+        'longitude': widget.longitude,
+        'address': widget.address,
+      },
+    );
+  }
 
   Future<void> _saveQRImage(BuildContext context, GlobalKey qrKey) async {
     try {
@@ -44,7 +71,7 @@ class LocationResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final qrKey = GlobalKey();
-    final qrData = 'geo:$latitude,$longitude';
+    final qrData = locationData;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -130,7 +157,7 @@ class LocationResultScreen extends StatelessWidget {
                   _buildActionButton(
                     icon: Icons.share,
                     label: 'Share Text',
-                    onTap: () => Share.share('Location: $latitude, $longitude'),
+                    onTap: () => Share.share('Location: $qrData'),
                   ),
                 ],
               ),
@@ -144,7 +171,7 @@ class LocationResultScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
-                      'Latitude: $latitude\nLongitude: $longitude',
+                      'Latitude: ${widget.latitude}\nLongitude: ${widget.longitude}',
                       style: TextStyle(fontSize: 16),
                       textAlign: TextAlign.center,
                     ),

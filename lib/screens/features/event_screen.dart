@@ -189,11 +189,11 @@ class _EventScreenState extends State<EventScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => EventResultScreen(
-                            eventName: _eventNameController.text,
-                            startDate: _startDate,
-                            endDate: _endDate,
+                            title: _eventNameController.text,
                             location: _locationController.text,
                             description: _descriptionController.text,
+                            startDate: _startDate,
+                            endDate: _endDate,
                           ),
                         ),
                       );
@@ -208,6 +208,7 @@ class _EventScreenState extends State<EventScreen> {
                   child: Text(
                     'Create',
                     style: TextStyle(
+                      color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),

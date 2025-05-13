@@ -1,10 +1,10 @@
 name: qr_scanner
-description: A new Flutter project.
+description: A QR code and barcode scanner app.
 publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=2.19.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -13,11 +13,14 @@ dependencies:
   qr_code_scanner: ^1.0.1
   permission_handler: ^10.2.0
   url_launcher: ^6.1.11
-  share_plus: ^7.0.2
+  share_plus: ^7.2.1
   image_picker: ^1.0.4
   google_ml_kit: ^0.16.3
   qr_flutter: ^4.1.0
   path_provider: ^2.1.1
+  shared_preferences: ^2.2.2
+  contacts_service: ^0.6.3
+  provider: ^6.0.5
 
 dev_dependencies:
   flutter_test:
@@ -27,4 +30,12 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/ 
+    - assets/images/
+    - assets/icons/
+    - assets/icons/twitter.png
+    - assets/icons/instagram.png
+    - assets/icons/facebook.png
+    - assets/icons/whatsapp.png
+    - assets/icons/youtube.png
+    - assets/icons/spotify.png
+    

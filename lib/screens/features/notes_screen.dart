@@ -14,17 +14,18 @@ class _NotesScreenState extends State<NotesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon:
+              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Notes',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
         centerTitle: true,
       ),
@@ -38,12 +39,12 @@ class _NotesScreenState extends State<NotesScreen> {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: Colors.green.shade100,
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Icon(
                   Icons.note_alt,
-                  color: Colors.green,
+                  color: Theme.of(context).primaryColor,
                   size: 40,
                 ),
               ),
@@ -53,6 +54,7 @@ class _NotesScreenState extends State<NotesScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
+                  color: Theme.of(context).textTheme.titleLarge?.color,
                 ),
               ),
               SizedBox(height: 40),
@@ -61,13 +63,31 @@ class _NotesScreenState extends State<NotesScreen> {
                 maxLines: 5,
                 decoration: InputDecoration(
                   hintText: 'Enter Text Here',
+                  hintStyle: TextStyle(
+                    color: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.color
+                        ?.withOpacity(0.5),
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).dividerColor,
+                    ),
                   ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ),
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
               SizedBox(height: 40),
@@ -76,19 +96,28 @@ class _NotesScreenState extends State<NotesScreen> {
                 height: 55,
                 child: ElevatedButton(
                   onPressed: () {
-                    if (_textController.text.isNotEmpty) {
+                    final text = _textController.text.trim();
+                    if (text.isNotEmpty) {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => NotesResultScreen(
-                            text: _textController.text,
+                            title: 'Note',
+                            content: text,
                           ),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Please enter some text'),
+                          backgroundColor: Theme.of(context).colorScheme.error,
                         ),
                       );
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Theme.of(context).primaryColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -96,6 +125,8 @@ class _NotesScreenState extends State<NotesScreen> {
                   child: Text(
                     'Create',
                     style: TextStyle(
+                      color:
+                          Theme.of(context).primaryTextTheme.labelLarge?.color,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),

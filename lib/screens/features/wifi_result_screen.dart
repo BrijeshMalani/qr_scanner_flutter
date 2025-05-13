@@ -5,14 +5,15 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
+import '../../utils/qr_history_helper.dart';
 
-class WifiResultScreen extends StatelessWidget {
+class WiFiResultScreen extends StatefulWidget {
   final String ssid;
   final String password;
   final String encryptionType;
   final bool isHidden;
 
-  const WifiResultScreen({
+  const WiFiResultScreen({
     Key? key,
     required this.ssid,
     required this.password,
@@ -20,9 +21,28 @@ class WifiResultScreen extends StatelessWidget {
     required this.isHidden,
   }) : super(key: key);
 
-  String get wifiString {
-    String type = encryptionType == 'nopass' ? 'nopass' : encryptionType;
-    return 'WIFI:S:$ssid;T:$type;P:$password;H:${isHidden ? 'true' : 'false'};;';
+  @override
+  _WiFiResultScreenState createState() => _WiFiResultScreenState();
+}
+
+class _WiFiResultScreenState extends State<WiFiResultScreen> {
+  String get wifiData =>
+      'WIFI:T:${widget.encryptionType};S:${widget.ssid};P:${widget.password};;';
+
+  @override
+  void initState() {
+    super.initState();
+    QRHistoryHelper.saveQRToHistoryAfterBuild(
+      context,
+      title: 'WiFi',
+      content: 'Network: ${widget.ssid}',
+      iconPath: 'assets/icons/wifi.png',
+      additionalData: {
+        'ssid': widget.ssid,
+        'password': widget.password,
+        'encryption': widget.encryptionType,
+      },
+    );
   }
 
   Future<void> _saveQRImage(BuildContext context, GlobalKey qrKey) async {
@@ -114,7 +134,7 @@ class WifiResultScreen extends StatelessWidget {
                 child: RepaintBoundary(
                   key: qrKey,
                   child: QrImageView(
-                    data: wifiString,
+                    data: wifiData,
                     version: QrVersions.auto,
                     size: 200.0,
                     backgroundColor: Colors.white,
@@ -133,13 +153,13 @@ class WifiResultScreen extends StatelessWidget {
                   _buildActionButton(
                     icon: Icons.qr_code,
                     label: 'Share QR Code',
-                    onTap: () => Share.share(wifiString),
+                    onTap: () => Share.share(wifiData),
                   ),
                   _buildActionButton(
                     icon: Icons.share,
                     label: 'Share Text',
                     onTap: () => Share.share(
-                      'Network: $ssid\nType: $encryptionType\nPassword: $password\nHidden: ${isHidden ? 'Yes' : 'No'}',
+                      'Network: ${widget.ssid}\nType: ${widget.encryptionType}\nPassword: ${widget.password}\nHidden: ${widget.isHidden ? 'Yes' : 'No'}',
                     ),
                   ),
                 ],
@@ -154,7 +174,7 @@ class WifiResultScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
-                      'Name: $ssid\nType: $encryptionType\nPassword: $password\nHidden: ${isHidden ? 'Yes' : 'No'}',
+                      'Name: ${widget.ssid}\nType: ${widget.encryptionType}\nPassword: ${widget.password}\nHidden: ${widget.isHidden ? 'Yes' : 'No'}',
                       style: TextStyle(fontSize: 16),
                     ),
                   ],

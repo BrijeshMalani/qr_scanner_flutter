@@ -5,14 +5,39 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
+import '../../utils/qr_history_helper.dart';
 
-class NotesResultScreen extends StatelessWidget {
-  final String text;
+class NotesResultScreen extends StatefulWidget {
+  final String title;
+  final String content;
 
   const NotesResultScreen({
     Key? key,
-    required this.text,
+    required this.title,
+    required this.content,
   }) : super(key: key);
+
+  @override
+  _NotesResultScreenState createState() => _NotesResultScreenState();
+}
+
+class _NotesResultScreenState extends State<NotesResultScreen> {
+  String get noteData => widget.content;
+
+  @override
+  void initState() {
+    super.initState();
+    QRHistoryHelper.saveQRToHistoryAfterBuild(
+      context,
+      title: 'Note',
+      content: widget.content,
+      iconPath: 'assets/icons/note.png',
+      additionalData: {
+        'title': widget.title,
+        'content': widget.content,
+      },
+    );
+  }
 
   Future<void> _saveQRImage(BuildContext context, GlobalKey qrKey) async {
     try {
@@ -103,7 +128,7 @@ class NotesResultScreen extends StatelessWidget {
                 child: RepaintBoundary(
                   key: qrKey,
                   child: QrImageView(
-                    data: text,
+                    data: noteData,
                     version: QrVersions.auto,
                     size: 200.0,
                     backgroundColor: Colors.white,
@@ -122,12 +147,12 @@ class NotesResultScreen extends StatelessWidget {
                   _buildActionButton(
                     icon: Icons.qr_code,
                     label: 'Share QR Code',
-                    onTap: () => Share.share(text),
+                    onTap: () => Share.share(noteData),
                   ),
                   _buildActionButton(
                     icon: Icons.share,
                     label: 'Share Text',
-                    onTap: () => Share.share(text),
+                    onTap: () => Share.share(noteData),
                   ),
                 ],
               ),
@@ -139,7 +164,7 @@ class NotesResultScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  text,
+                  noteData,
                   style: TextStyle(fontSize: 16),
                 ),
               ),

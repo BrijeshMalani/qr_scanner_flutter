@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   @override
@@ -7,23 +9,21 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _soundEnabled = false;
-  bool _darkThemeEnabled = false;
   bool _vibrateEnabled = true;
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Settings',
-          style: TextStyle(
-            color: Colors.blue[700],
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -42,8 +42,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               'Dark Theme',
               Icons.dark_mode,
               Colors.amber,
-              _darkThemeEnabled,
-              (value) => setState(() => _darkThemeEnabled = value),
+              isDark,
+              (value) => themeProvider.toggleTheme(),
             ),
             _buildSettingItem(
               'Vibrate',
@@ -93,6 +93,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
+          color: Theme.of(context).textTheme.titleLarge?.color,
         ),
       ),
     );
@@ -119,12 +120,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w500,
+          color: Theme.of(context).textTheme.bodyLarge?.color,
         ),
       ),
       trailing: Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: Colors.blue[700],
+        activeColor: Theme.of(context).primaryColor,
       ),
     );
   }
@@ -150,6 +152,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w500,
+          color: Theme.of(context).textTheme.bodyLarge?.color,
         ),
       ),
       trailing: Row(
@@ -158,11 +161,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             value,
             style: TextStyle(
-              color: Colors.grey[600],
+              color: Theme.of(context).textTheme.bodyMedium?.color,
               fontSize: 14,
             ),
           ),
-          Icon(Icons.chevron_right, color: Colors.grey),
+          Icon(
+            Icons.chevron_right,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+          ),
         ],
       ),
       onTap: onTap,
@@ -189,9 +195,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w500,
+          color: Theme.of(context).textTheme.bodyLarge?.color,
         ),
       ),
-      trailing: Icon(Icons.chevron_right, color: Colors.grey),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: Theme.of(context).textTheme.bodyMedium?.color,
+      ),
       onTap: onTap,
     );
   }
