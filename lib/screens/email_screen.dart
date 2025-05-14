@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../utils/qr_history_helper.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class EmailScreen extends StatefulWidget {
   const EmailScreen({Key? key}) : super(key: key);
@@ -253,7 +254,7 @@ class EmailResultScreen extends StatefulWidget {
 
 class _EmailResultScreenState extends State<EmailResultScreen> {
   String get emailData {
-    String data = 'MAILTO:${widget.email}';
+    String data = 'mailto:${widget.email}';
     if (widget.subject.isNotEmpty || widget.message.isNotEmpty) {
       data += '?';
       if (widget.subject.isNotEmpty) {
@@ -265,6 +266,27 @@ class _EmailResultScreenState extends State<EmailResultScreen> {
       }
     }
     return data;
+  }
+
+  Future<void> _sendEmail() async {
+    final Uri emailUri = Uri.parse(emailData);
+    if (await canLaunchUrl(emailUri)) {
+      await launchUrl(emailUri);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not launch email app'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: EdgeInsets.all(16),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -324,7 +346,7 @@ class _EmailResultScreenState extends State<EmailResultScreen> {
               Text(
                 'Email',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -351,12 +373,17 @@ class _EmailResultScreenState extends State<EmailResultScreen> {
                 children: [
                   _buildActionButton(
                     icon: Icons.download,
-                    label: 'Save QR Image',
+                    label: 'Save QR',
                     onTap: () {},
                   ),
                   _buildActionButton(
+                    icon: Icons.send,
+                    label: 'Send Email',
+                    onTap: _sendEmail,
+                  ),
+                  _buildActionButton(
                     icon: Icons.qr_code,
-                    label: 'Share QR Code',
+                    label: 'Share QR',
                     onTap: () => Share.share(emailData),
                   ),
                   _buildActionButton(
@@ -372,26 +399,42 @@ class _EmailResultScreenState extends State<EmailResultScreen> {
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor,
+                    width: 1,
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Email: ${widget.email}',
-                      style: TextStyle(fontSize: 16),
+                      'Email Details',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.titleLarge?.color,
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    _buildDetailRow(
+                      icon: Icons.email_outlined,
+                      label: 'To:',
+                      value: widget.email,
                     ),
                     if (widget.subject.isNotEmpty) ...[
                       SizedBox(height: 8),
-                      Text(
-                        'Subject: ${widget.subject}',
-                        style: TextStyle(fontSize: 16),
+                      _buildDetailRow(
+                        icon: Icons.subject,
+                        label: 'Subject:',
+                        value: widget.subject,
                       ),
                     ],
                     if (widget.message.isNotEmpty) ...[
                       SizedBox(height: 8),
-                      Text(
-                        'Message: ${widget.message}',
-                        style: TextStyle(fontSize: 16),
+                      _buildDetailRow(
+                        icon: Icons.message_outlined,
+                        label: 'Message:',
+                        value: widget.message,
                       ),
                     ],
                   ],
@@ -404,6 +447,44 @@ class _EmailResultScreenState extends State<EmailResultScreen> {
     );
   }
 
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: Theme.of(context).textTheme.bodyMedium?.color,
+        ),
+        SizedBox(width: 8),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: 16,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+              children: [
+                TextSpan(
+                  text: '$label ',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  ),
+                ),
+                TextSpan(text: value),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildActionButton({
     required IconData icon,
     required String label,
@@ -412,19 +493,32 @@ class _EmailResultScreenState extends State<EmailResultScreen> {
     return Column(
       children: [
         Container(
-          width: 60,
-          height: 60,
+          width: 50,
+          height: 50,
           decoration: BoxDecoration(
             color: Colors.green,
             shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.green.withOpacity(0.3),
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              ),
+            ],
           ),
           child: IconButton(
-            icon: Icon(icon, color: Colors.white),
+            icon: Icon(icon, color: Colors.white, size: 22),
             onPressed: onTap,
           ),
         ),
         SizedBox(height: 8),
-        Text(label, style: TextStyle(fontSize: 12)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+          ),
+        ),
       ],
     );
   }
