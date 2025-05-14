@@ -16,15 +16,16 @@ class _TwitterScreenState extends State<TwitterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon:
+              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Twitter',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
       ),
       body: SingleChildScrollView(
@@ -140,15 +141,16 @@ class _TwitterResultScreenState extends State<TwitterResultScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon:
+              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Result',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
       ),
       body: SingleChildScrollView(

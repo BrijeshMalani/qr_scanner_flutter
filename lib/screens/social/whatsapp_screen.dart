@@ -16,15 +16,16 @@ class _WhatsAppScreenState extends State<WhatsAppScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon:
+              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'WhatsApp',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
       ),
       body: SingleChildScrollView(
@@ -136,7 +137,7 @@ class _WhatsAppResultScreenState extends State<WhatsAppResultScreen> {
     QRHistoryHelper.saveQRToHistoryAfterBuild(
       context,
       title: 'WhatsApp',
-      content: 'Chat with: ${widget.phoneNumber}',
+      content: whatsappData,
       iconPath: 'assets/icons/whatsapp.png',
       additionalData: {
         'phone': widget.phoneNumber,
@@ -149,15 +150,16 @@ class _WhatsAppResultScreenState extends State<WhatsAppResultScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon:
+              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Result',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
       ),
       body: SingleChildScrollView(

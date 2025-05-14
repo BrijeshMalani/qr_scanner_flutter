@@ -23,15 +23,16 @@ class _ContactScreenState extends State<ContactScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon:
+              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Contact',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
       ),
       body: SingleChildScrollView(
@@ -217,7 +218,7 @@ END:VCARD''';
     QRHistoryHelper.saveQRToHistoryAfterBuild(
       context,
       title: 'Contact',
-      content: widget.fullName,
+      content: vCardData,
       iconPath: 'assets/icons/contact.png',
       additionalData: {
         'name': widget.fullName,
@@ -242,15 +243,16 @@ END:VCARD''';
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon:
+              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Result',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
       ),
       body: SingleChildScrollView(
@@ -316,7 +318,7 @@ END:VCARD''';
               Container(
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(

@@ -59,20 +59,20 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSocialItem(String title, String imagePath) {
+  Widget _buildSocialItem(String title, String imagePath, Color color) {
     return InkWell(
       onTap: () {
         switch (title) {
+          case 'Twitter':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => TwitterScreen()),
+            );
+            break;
           case 'Instagram':
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => InstagramScreen()),
-            );
-            break;
-          case 'Spotify':
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SpotifyScreen()),
             );
             break;
           case 'Facebook':
@@ -93,10 +93,10 @@ class _HomeScreenState extends State<HomeScreen> {
               MaterialPageRoute(builder: (context) => YoutubeScreen()),
             );
             break;
-          case 'Twitter':
+          case 'Spotify':
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => TwitterScreen()),
+              MaterialPageRoute(builder: (context) => SpotifyScreen()),
             );
             break;
         }
@@ -106,16 +106,8 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Theme.of(context).cardTheme.color,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Theme.of(context).shadowColor.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Image.asset(
               imagePath,
@@ -142,16 +134,8 @@ class _HomeScreenState extends State<HomeScreen> {
       width: 160,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
+        color: backgroundColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).shadowColor.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,7 +266,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     'Popular',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).textTheme.titleLarge?.color,
                     ),
@@ -354,7 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     'Social',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).textTheme.titleLarge?.color,
                     ),
@@ -367,13 +351,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisSpacing: 16,
                     crossAxisSpacing: 16,
                     children: [
-                      _buildSocialItem('Twitter', 'assets/icons/twitter.png'),
                       _buildSocialItem(
-                          'Instagram', 'assets/icons/instagram.png'),
-                      _buildSocialItem('Facebook', 'assets/icons/facebook.png'),
-                      _buildSocialItem('WhatsApp', 'assets/icons/whatsapp.png'),
-                      _buildSocialItem('Youtube', 'assets/icons/youtube.png'),
-                      _buildSocialItem('Spotify', 'assets/icons/spotify.png'),
+                          'Twitter', 'assets/icons/twitter.png', Colors.blue),
+                      _buildSocialItem('Instagram',
+                          'assets/icons/instagram.png', Colors.pink),
+                      _buildSocialItem(
+                          'Facebook', 'assets/icons/facebook.png', Colors.blue),
+                      _buildSocialItem('WhatsApp', 'assets/icons/whatsapp.png',
+                          Colors.green),
+                      _buildSocialItem(
+                          'Youtube', 'assets/icons/youtube.png', Colors.red),
+                      _buildSocialItem(
+                          'Spotify', 'assets/icons/spotify.png', Colors.green),
                     ],
                   ),
                 ],

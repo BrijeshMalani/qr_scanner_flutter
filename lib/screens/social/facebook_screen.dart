@@ -16,15 +16,16 @@ class _FacebookScreenState extends State<FacebookScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon:
+              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Facebook',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
       ),
       body: SingleChildScrollView(
@@ -140,15 +141,16 @@ class _FacebookResultScreenState extends State<FacebookResultScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon:
+              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Result',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
       ),
       body: SingleChildScrollView(
@@ -257,7 +259,13 @@ class _FacebookResultScreenState extends State<FacebookResultScreen> {
           ),
         ),
         SizedBox(height: 8),
-        Text(label, style: TextStyle(fontSize: 12)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+          ),
+        ),
       ],
     );
   }

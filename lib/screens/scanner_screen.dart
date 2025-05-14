@@ -15,11 +15,11 @@ class ScannerScreen extends StatefulWidget {
 }
 
 class _ScannerScreenState extends State<ScannerScreen> {
-  bool _hasPermission = false;
-  QRViewController? controller;
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  String? result;
+  QRViewController? controller;
   bool _isFlashOn = false;
+  bool _isCameraPermissionGranted = false;
+  bool _isProcessingImage = false;
 
   @override
   void initState() {
@@ -43,237 +43,163 @@ class _ScannerScreenState extends State<ScannerScreen> {
   }
 
   Future<void> _checkPermission() async {
-    final status = await Permission.camera.status;
-    setState(() => _hasPermission = status.isGranted);
-  }
-
-  Future<void> _requestPermission() async {
     final status = await Permission.camera.request();
-    setState(() => _hasPermission = status.isGranted);
-  }
-
-  void _onQRViewCreated(QRViewController controller) {
-    setState(() => this.controller = controller);
-    controller.scannedDataStream.listen((scanData) {
-      setState(() => result = scanData.code);
-      if (result != null) {
-        _showScanResult(result!);
-      }
+    setState(() {
+      _isCameraPermissionGranted = status.isGranted;
     });
   }
 
-  void _toggleFlash() async {
-    if (controller != null) {
-      await controller!.toggleFlash();
-      setState(() => _isFlashOn = !_isFlashOn);
+  Future<void> _pickImage() async {
+    if (_isProcessingImage) return;
+
+    setState(() {
+      _isProcessingImage = true;
+    });
+
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+      if (image != null) {
+        final File imageFile = File(image.path);
+        final ml_kit.InputImage inputImage =
+            ml_kit.InputImage.fromFile(imageFile);
+        final ml_kit.BarcodeScanner barcodeScanner =
+            ml_kit.GoogleMlKit.vision.barcodeScanner();
+
+        final List<ml_kit.Barcode> barcodes =
+            await barcodeScanner.processImage(inputImage);
+        await barcodeScanner.close();
+
+        if (barcodes.isNotEmpty && mounted) {
+          final String? code = barcodes.first.rawValue;
+          if (code != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ScanResultScreen(
+                  scannedCode: code,
+                  qrImage: imageFile,
+                ),
+              ),
+            );
+          } else {
+            _showError('No QR code found in the image');
+          }
+        } else {
+          _showError('No QR code found in the image');
+        }
+      }
+    } catch (e) {
+      _showError('Error processing image: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessingImage = false;
+        });
+      }
     }
   }
 
-  void _showScanResult(String code) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ScanResultScreen(
-          scannedCode: code,
-          qrImage: null, // TODO: Add QR image capture support
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
         ),
+        margin: EdgeInsets.all(16),
       ),
     );
   }
 
-  Future<void> _scanFromGallery() async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? pickedFile = await picker.pickImage(
-        source: ImageSource.gallery,
-      );
-
-      if (pickedFile != null) {
-        // Show loading indicator
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return Center(
-              child: Container(
-                padding: EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(Colors.blue[700]!),
-                    ),
-                    SizedBox(height: 16),
-                    Text('Processing image...'),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-
-        // Process the image
-        final String? scannedCode = await processQRCode(pickedFile.path);
-
-        // Dismiss loading dialog
-        Navigator.pop(context);
-
-        if (scannedCode != null) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ScanResultScreen(
-                scannedCode: scannedCode,
-                qrImage: File(pickedFile.path),
-              ),
+  void _onQRViewCreated(QRViewController controller) {
+    this.controller = controller;
+    controller.scannedDataStream.listen((scanData) {
+      if (scanData.code != null) {
+        controller.pauseCamera();
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ScanResultScreen(
+              scannedCode: scanData.code!,
             ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('No QR code found in the image'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
+          ),
+        ).then((_) => controller.resumeCamera());
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error scanning from gallery: ${e.toString()}'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  Future<String?> processQRCode(String imagePath) async {
-    try {
-      final inputImage = ml_kit.InputImage.fromFilePath(imagePath);
-      final barcodeScanner = ml_kit.GoogleMlKit.vision.barcodeScanner();
-
-      final List<ml_kit.Barcode> barcodes =
-          await barcodeScanner.processImage(inputImage);
-      await barcodeScanner.close();
-
-      if (barcodes.isNotEmpty) {
-        // Get the first valid QR code
-        for (ml_kit.Barcode barcode in barcodes) {
-          final rawValue = barcode.rawValue;
-          if (rawValue != null) {
-            return rawValue;
-          }
-        }
-      }
-      return null;
-    } catch (e) {
-      print('Error processing QR code: $e');
-      return null;
-    }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_isCameraPermissionGranted) {
+      return _buildPermissionRequest();
+    }
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 0,
-        title: Text(
-          'Scanner',
-          style: Theme.of(context).appBarTheme.titleTextStyle,
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _isFlashOn ? Icons.flash_on : Icons.flash_off,
-              color: Theme.of(context).iconTheme.color,
-            ),
-            onPressed: _toggleFlash,
-          ),
-        ],
-      ),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            flex: 5,
-            child: _hasPermission
-                ? QRView(
-                    key: qrKey,
-                    onQRViewCreated: _onQRViewCreated,
-                    overlay: QrScannerOverlayShape(
-                      borderColor: Theme.of(context).primaryColor,
-                      borderRadius: 10,
-                      borderLength: 30,
-                      borderWidth: 10,
-                      cutOutSize: 300,
-                    ),
-                  )
-                : Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.camera_alt,
-                          size: 64,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'Camera Permission Required',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color:
-                                Theme.of(context).textTheme.titleLarge?.color,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Please grant camera permission to use the scanner',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color:
-                                Theme.of(context).textTheme.bodyMedium?.color,
-                          ),
-                        ),
-                        SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: _requestPermission,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).primaryColor,
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 32,
-                              vertical: 16,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            'Grant Permission',
-                            style: TextStyle(
-                              color: Theme.of(context)
-                                  .primaryTextTheme
-                                  .labelLarge
-                                  ?.color,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+          QRView(
+            key: qrKey,
+            onQRViewCreated: _onQRViewCreated,
+            overlay: QrScannerOverlayShape(
+              borderColor: Theme.of(context).primaryColor,
+              borderRadius: 10,
+              borderLength: 30,
+              borderWidth: 10,
+              cutOutSize: MediaQuery.of(context).size.width * 0.8,
+            ),
           ),
-          Expanded(
-            flex: 1,
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 16,
+            right: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      _isFlashOn ? Icons.flash_on : Icons.flash_off,
+                      color: Theme.of(context).iconTheme.color,
+                    ),
+                    onPressed: () {
+                      controller?.toggleFlash();
+                      setState(() => _isFlashOn = !_isFlashOn);
+                    },
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.flip_camera_ios,
+                      color: Theme.of(context).iconTheme.color,
+                    ),
+                    onPressed: () => controller?.flipCamera(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
             child: Container(
               width: double.infinity,
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.vertical(
@@ -288,29 +214,140 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 ],
               ),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'Scan QR Code',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).textTheme.titleLarge?.color,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Position the QR code within the frame to scan',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyMedium?.color,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: _buildOptionButton(
+                          icon: Icons.qr_code_scanner,
+                          label: 'Camera Scan',
+                          isActive: true,
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: _buildOptionButton(
+                          icon: Icons.image,
+                          label: 'Gallery',
+                          onTap: _pickImage,
+                          isLoading: _isProcessingImage,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPermissionRequest() {
+    return Scaffold(
+      body: Container(
+        padding: EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.camera_alt,
+              size: 64,
+              color: Theme.of(context).primaryColor,
+            ),
+            SizedBox(height: 24),
+            Text(
+              'Camera Permission Required',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.titleLarge?.color,
+              ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Please grant camera permission to use the QR code scanner',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+              ),
+            ),
+            SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _checkPermission,
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text('Grant Permission'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOptionButton({
+    required IconData icon,
+    required String label,
+    VoidCallback? onTap,
+    bool isActive = false,
+    bool isLoading = false,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: isActive
+                  ? Theme.of(context).primaryColor
+                  : Theme.of(context).dividerColor,
+              width: 2,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              if (isLoading)
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Theme.of(context).primaryColor,
+                    ),
+                  ),
+                )
+              else
+                Icon(
+                  icon,
+                  color: isActive
+                      ? Theme.of(context).primaryColor
+                      : Theme.of(context).iconTheme.color,
+                ),
+              SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isActive
+                      ? Theme.of(context).primaryColor
+                      : Theme.of(context).textTheme.bodyMedium?.color,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

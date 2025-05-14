@@ -216,7 +216,7 @@ class _SMSResultScreenState extends State<SMSResultScreen> {
     QRHistoryHelper.saveQRToHistoryAfterBuild(
       context,
       title: 'SMS',
-      content: 'To: ${widget.phoneNumber}',
+      content: smsData,
       iconPath: 'assets/icons/sms.png',
       additionalData: {
         'phone': widget.phoneNumber,
@@ -228,17 +228,18 @@ class _SMSResultScreenState extends State<SMSResultScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon:
+              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Result',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
         centerTitle: true,
       ),
@@ -311,7 +312,7 @@ class _SMSResultScreenState extends State<SMSResultScreen> {
               Container(
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(

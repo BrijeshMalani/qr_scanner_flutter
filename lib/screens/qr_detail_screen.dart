@@ -355,8 +355,8 @@ END:VCARD''';
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         title: Text('QR Code Details'),
-        backgroundColor: Colors.white,
         foregroundColor: Colors.blue,
         elevation: 0,
       ),

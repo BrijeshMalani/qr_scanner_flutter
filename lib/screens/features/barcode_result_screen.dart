@@ -29,8 +29,8 @@ class _BarcodeResultScreenState extends State<BarcodeResultScreen> {
     super.initState();
     QRHistoryHelper.saveQRToHistoryAfterBuild(
       context,
-      title: 'Barcode',
-      content: '${widget.type}: ${widget.content}',
+      title: 'Barcode : ${widget.type}',
+      content: '${widget.content}',
       iconPath: 'assets/icons/barcode.png',
       additionalData: {
         'type': widget.type,
@@ -69,17 +69,18 @@ class _BarcodeResultScreenState extends State<BarcodeResultScreen> {
     final qrKey = GlobalKey();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon:
+              Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Result',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
         centerTitle: true,
       ),
@@ -122,7 +123,7 @@ class _BarcodeResultScreenState extends State<BarcodeResultScreen> {
               Container(
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: RepaintBoundary(
@@ -160,7 +161,7 @@ class _BarcodeResultScreenState extends State<BarcodeResultScreen> {
               Container(
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(

@@ -4,6 +4,7 @@ import '../models/history_item.dart';
 import '../services/history_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import './qr_detail_screen.dart';
+import '../utils/qr_history_helper.dart';
 
 class HistoryScreen extends StatefulWidget {
   @override
@@ -71,9 +72,14 @@ class _HistoryScreenState extends State<HistoryScreen>
           unselectedLabelColor: Theme.of(context).textTheme.bodyMedium?.color,
           indicatorColor: Theme.of(context).primaryColor,
           tabs: [
-            Tab(text: 'Scanned'),
-            Tab(text: 'Created'),
-            Tab(text: 'B-Cards'),
+            Tab(
+                child: Text('Scanned',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+            Tab(
+                child: Text('Created',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
           ],
         ),
       ),
@@ -82,7 +88,6 @@ class _HistoryScreenState extends State<HistoryScreen>
         children: [
           _buildHistoryList(scannedItems),
           _buildHistoryList(createdItems),
-          _buildHistoryList(bcardItems),
         ],
       ),
     );
@@ -123,6 +128,9 @@ class _HistoryScreenState extends State<HistoryScreen>
             padding: EdgeInsets.all(16),
             itemBuilder: (context, index) {
               final item = items[index];
+              final IconData icon = QRHistoryHelper.getIcon(item.title);
+              final Color iconColor = QRHistoryHelper.getIconColor(item.title);
+
               return Card(
                 elevation: 2,
                 margin: EdgeInsets.only(bottom: 16),
@@ -135,13 +143,26 @@ class _HistoryScreenState extends State<HistoryScreen>
                   leading: Container(
                     padding: EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      color: iconColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(
-                      Icons.qr_code,
-                      color: Theme.of(context).primaryColor,
-                    ),
+                    child: item.iconPath != null &&
+                            item.iconPath != 'material_icon'
+                        ? Image.asset(
+                            item.iconPath!,
+                            width: 24,
+                            height: 24,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                icon,
+                                color: iconColor,
+                              );
+                            },
+                          )
+                        : Icon(
+                            icon,
+                            color: iconColor,
+                          ),
                   ),
                   title: Text(
                     item.title,
