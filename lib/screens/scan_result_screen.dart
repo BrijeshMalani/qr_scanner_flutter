@@ -8,6 +8,7 @@ import 'dart:io';
 import '../services/service_provider.dart';
 import '../models/history_item.dart';
 import '../utils/colors.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ScanResultScreen extends StatefulWidget {
   final String scannedCode;
@@ -42,88 +43,105 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
     } else if (isEmail) {
       _parseEmail();
     }
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   _saveToHistory();
-    // });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _saveToHistory();
+    });
   }
 
   void _parseVCard() {
     final lines = widget.scannedCode.split('\n');
+    bool isInVCard = false;
+
     for (var line in lines) {
-      if (line.contains(':')) {
-        final parts = line.split(':');
-        final key = parts[0].trim();
-        final value = parts[1].trim();
-        switch (key) {
-          case 'FN':
-            _contactInfo['name'] = value;
-            break;
-          case 'TEL':
-            _contactInfo['phone'] = value;
-            break;
-          case 'EMAIL':
-            _contactInfo['email'] = value;
-            break;
-          case 'ADR':
-            final address =
-                value.split(';').where((s) => s.isNotEmpty).join(', ');
-            _contactInfo['address'] = address;
-            break;
-          case 'ORG':
-            _contactInfo['organization'] = value;
-            break;
-          case 'TITLE':
-            _contactInfo['note'] = value;
-            break;
-        }
+      line = line.trim();
+
+      if (line == 'BEGIN:VCARD') {
+        isInVCard = true;
+        continue;
+      }
+
+      if (line == 'END:VCARD') {
+        isInVCard = false;
+        break;
+      }
+
+      if (!isInVCard || !line.contains(':')) continue;
+
+      final parts = line.split(':');
+      final key = parts[0].trim();
+      final value = parts[1].trim();
+
+      switch (key) {
+        case 'FN':
+          _contactInfo['name'] = value;
+          break;
+        case 'TEL':
+          _contactInfo['phone'] = value;
+          break;
+        case 'EMAIL':
+          _contactInfo['email'] = value;
+          break;
+        case 'ORG':
+          _contactInfo['organization'] = value;
+          break;
+        case 'ADR':
+          _contactInfo['address'] = value;
+          break;
+        case 'NOTE':
+          _contactInfo['note'] = value;
+          break;
       }
     }
   }
 
   void _parseSMS() {
-    // Remove 'SMSTO:' prefix
-    final content = widget.scannedCode.substring(6);
-    final parts = content.split(':');
-    if (parts.length >= 1) {
+    if (widget.scannedCode.startsWith('SMSTO:')) {
+      final parts = widget.scannedCode.substring(6).split(':');
       _smsInfo['phone'] = parts[0];
-      if (parts.length >= 2) {
+      if (parts.length > 1) {
         _smsInfo['message'] = parts[1];
       }
     }
   }
 
   void _parseEmail() {
-    String content = widget.scannedCode.substring(7); // Remove 'MAILTO:'
-    final Uri uri = Uri.parse('MAILTO:$content');
+    if (widget.scannedCode.startsWith('MAILTO:')) {
+      final uri = Uri.parse(widget.scannedCode);
+      _emailInfo['email'] = uri.path;
 
-    _emailInfo['email'] = uri.path;
-
-    if (uri.hasQuery) {
-      final params = uri.queryParameters;
-      if (params.containsKey('subject')) {
-        _emailInfo['subject'] = Uri.decodeComponent(params['subject']!);
-      }
-      if (params.containsKey('body')) {
-        _emailInfo['body'] = Uri.decodeComponent(params['body']!);
+      if (uri.hasQuery) {
+        final params = uri.queryParameters;
+        if (params.containsKey('subject')) {
+          _emailInfo['subject'] = Uri.decodeComponent(params['subject']!);
+        }
+        if (params.containsKey('body')) {
+          _emailInfo['body'] = Uri.decodeComponent(params['body']!);
+        }
       }
     }
   }
 
   Future<void> _saveToHistory() async {
     final historyService = ServiceProvider.of(context).historyService;
+    Map<String, dynamic> additionalData = {
+      'raw_data': widget.scannedCode,
+    };
+
+    if (isVCard) {
+      additionalData.addAll(_contactInfo);
+    } else if (isSMS) {
+      additionalData.addAll(_smsInfo);
+    } else if (isEmail) {
+      additionalData.addAll(_emailInfo);
+    }
+
     final historyItem = HistoryItem(
       type: 'scanned',
       title: _getContentType(),
       subtitle: _getSubtitle(),
       date: DateTime.now().toString(),
       iconPath: _getIconPath(),
-      additionalData: isVCard
-          ? _contactInfo
-          : isSMS
-              ? _smsInfo
-              : isEmail
-                  ? _emailInfo
-                  : null,
+      additionalData: additionalData,
     );
     await historyService.addItem(historyItem);
   }
@@ -165,34 +183,104 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
 
   Future<void> _addToContacts() async {
     try {
-      final Contact newContact = Contact(
-        givenName: _contactInfo['name'],
-        phones: _contactInfo['phone'] != null
-            ? [Item(label: "mobile", value: _contactInfo['phone'])]
-            : null,
-        emails: _contactInfo['email'] != null
-            ? [Item(label: "work", value: _contactInfo['email'])]
-            : null,
-        company: _contactInfo['organization'],
-        jobTitle: _contactInfo['note'],
-      );
-
-      await ContactsService.addContact(newContact);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Contact added successfully'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: EdgeInsets.all(16),
-          ),
-        );
+      // Request contacts permission
+      final permission = await Permission.contacts.request();
+      if (!permission.isGranted) {
+        _showError('Permission to access contacts denied');
+        return;
       }
+
+      // Clean phone number
+      String? cleanPhone;
+      if (_contactInfo['phone'] != null && _contactInfo['phone']!.isNotEmpty) {
+        cleanPhone = _contactInfo['phone']!.replaceAll(RegExp(r'[^\d+]'), '');
+        if (!cleanPhone.startsWith('+')) {
+          cleanPhone = '+$cleanPhone';
+        }
+      }
+
+      // Show contact form dialog
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Add Contact'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.person),
+                    title: Text('Name'),
+                    subtitle: Text(_contactInfo['name'] ?? ''),
+                  ),
+                  if (cleanPhone != null)
+                    ListTile(
+                      leading: Icon(Icons.phone),
+                      title: Text('Phone'),
+                      subtitle: Text(cleanPhone),
+                    ),
+                  if (_contactInfo['email'] != null)
+                    ListTile(
+                      leading: Icon(Icons.email),
+                      title: Text('Email'),
+                      subtitle: Text(_contactInfo['email']!),
+                    ),
+                  if (_contactInfo['organization'] != null)
+                    ListTile(
+                      leading: Icon(Icons.business),
+                      title: Text('Organization'),
+                      subtitle: Text(_contactInfo['organization']!),
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    final Contact newContact = Contact(
+                      givenName: _contactInfo['name'],
+                      phones:
+                          cleanPhone != null ? [Item(value: cleanPhone)] : null,
+                      emails: _contactInfo['email'] != null
+                          ? [Item(value: _contactInfo['email'])]
+                          : null,
+                      company: _contactInfo['organization'],
+                    );
+
+                    await ContactsService.addContact(newContact);
+                    if (!mounted) return;
+
+                    Navigator.pop(context); // Close dialog
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Contact added successfully'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } catch (e) {
+                    print('Error saving contact: $e');
+                    Navigator.pop(context); // Close dialog
+                    _showError('Failed to save contact. Please try again.');
+                  }
+                },
+                child: Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
     } catch (e) {
-      _showError('Error adding contact: $e');
+      print('Contact add error: $e');
+      _showError('Could not add contact. Please try again.');
     }
   }
 
@@ -243,7 +331,6 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
   }
 
   Widget _buildQrPreview() {
-    _saveToHistory();
     return Container(
       margin: EdgeInsets.symmetric(vertical: 20),
       padding: EdgeInsets.all(16),

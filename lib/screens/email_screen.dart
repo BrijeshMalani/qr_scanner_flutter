@@ -254,7 +254,7 @@ class EmailResultScreen extends StatefulWidget {
 
 class _EmailResultScreenState extends State<EmailResultScreen> {
   String get emailData {
-    String data = 'mailto:${widget.email}';
+    String data = 'MAILTO:${widget.email}';
     if (widget.subject.isNotEmpty || widget.message.isNotEmpty) {
       data += '?';
       if (widget.subject.isNotEmpty) {

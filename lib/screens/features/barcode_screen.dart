@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'barcode_result_screen.dart';
 
 class BarcodeScreen extends StatefulWidget {
@@ -11,18 +12,122 @@ class BarcodeScreen extends StatefulWidget {
 class _BarcodeScreenState extends State<BarcodeScreen> {
   final _textController = TextEditingController();
   String _selectedType = 'Code 128';
+  String? _errorText;
 
-  final List<String> _barcodeTypes = [
-    'Code 128',
-    'Code 39',
-    'EAN-13',
-    'EAN-8',
-    'UPC-A',
-    'UPC-E',
-  ];
+  final Map<String, BarcodeFormat> _barcodeTypes = {
+    'AZTEC': BarcodeFormat(
+      name: 'AZTEC',
+      regex: r'^[\x00-\xFF]*$',
+      maxLength: 3832,
+      description: 'Supports all ASCII characters',
+    ),
+    'CODABAR': BarcodeFormat(
+      name: 'CODABAR',
+      regex: r'^[0-9\-\$\:/\.\+]*$',
+      maxLength: 50,
+      description: 'Numbers, minus, dollar, colon, slash, dot, plus only',
+    ),
+    'Code 128': BarcodeFormat(
+      name: 'Code 128',
+      regex: r'^[\x00-\xFF]*$',
+      maxLength: 80,
+      description: 'Supports all ASCII characters',
+    ),
+    'Code 39': BarcodeFormat(
+      name: 'Code 39',
+      regex: r'^[0-9A-Z\-\.\s\$\/\+%]*$',
+      maxLength: 50,
+      description: 'Uppercase letters, numbers, and special characters',
+    ),
+    'Code 93': BarcodeFormat(
+      name: 'Code 93',
+      regex: r'^[0-9A-Z\-\.\s\$\/\+%]*$',
+      maxLength: 50,
+      description: 'Uppercase letters, numbers, and special characters',
+    ),
+    'Data Matrix': BarcodeFormat(
+      name: 'Data Matrix',
+      regex: r'^[\x00-\xFF]*$',
+      maxLength: 2335,
+      description: 'Supports all ASCII characters',
+    ),
+    'EAN-13': BarcodeFormat(
+      name: 'EAN-13',
+      regex: r'^\d{12}$',
+      maxLength: 12,
+      description: 'Exactly 12 digits (checksum will be added automatically)',
+    ),
+    'EAN-8': BarcodeFormat(
+      name: 'EAN-8',
+      regex: r'^\d{7}$',
+      maxLength: 7,
+      description: 'Exactly 7 digits (checksum will be added automatically)',
+    ),
+    'ITF-14': BarcodeFormat(
+      name: 'ITF-14',
+      regex: r'^\d{13}$',
+      maxLength: 13,
+      description: 'Exactly 13 digits (checksum will be added automatically)',
+    ),
+    'PDF417': BarcodeFormat(
+      name: 'PDF417',
+      regex: r'^[\x00-\xFF]*$',
+      maxLength: 1850,
+      description: 'Supports all ASCII characters',
+    ),
+    'UPC-A': BarcodeFormat(
+      name: 'UPC-A',
+      regex: r'^\d{11}$',
+      maxLength: 11,
+      description: 'Exactly 11 digits (checksum will be added automatically)',
+    ),
+    'UPC-E': BarcodeFormat(
+      name: 'UPC-E',
+      regex: r'^0\d{6}$',
+      maxLength: 7,
+      description:
+          'Must start with 0 followed by 6 digits (checksum will be added automatically)',
+    ),
+  };
+
+  bool _validateInput(String content, BarcodeFormat format) {
+    if (content.isEmpty) {
+      setState(() => _errorText = 'Content cannot be empty');
+      return false;
+    }
+
+    if (content.length > format.maxLength) {
+      setState(() => _errorText = format.description);
+      return false;
+    }
+
+    if (!RegExp(format.regex).hasMatch(content)) {
+      setState(() => _errorText = format.description);
+      return false;
+    }
+
+    // Additional validation for numeric-only barcodes
+    switch (format.name) {
+      case 'EAN-13':
+      case 'EAN-8':
+      case 'UPC-A':
+      case 'UPC-E':
+      case 'ITF-14':
+        if (content.length < format.maxLength) {
+          setState(() => _errorText = format.description);
+          return false;
+        }
+        break;
+    }
+
+    setState(() => _errorText = null);
+    return true;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final selectedFormat = _barcodeTypes[_selectedType]!;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -60,7 +165,7 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
               ),
               SizedBox(height: 20),
               Text(
-                'Barcode',
+                'Create Barcode',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -91,7 +196,7 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                     ),
                   ),
                 ),
-                items: _barcodeTypes.map((String type) {
+                items: _barcodeTypes.keys.map((String type) {
                   return DropdownMenuItem<String>(
                     value: type,
                     child: Text(
@@ -105,9 +210,22 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                 onChanged: (String? newValue) {
                   setState(() {
                     _selectedType = newValue!;
+                    // Validate current input with new format
+                    if (_textController.text.isNotEmpty) {
+                      _validateInput(
+                          _textController.text, _barcodeTypes[newValue]!);
+                    }
                   });
                 },
                 dropdownColor: Theme.of(context).cardColor,
+              ),
+              SizedBox(height: 8),
+              Text(
+                selectedFormat.description,
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                  fontSize: 12,
+                ),
               ),
               SizedBox(height: 20),
               TextField(
@@ -117,6 +235,7 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                   labelStyle: TextStyle(
                     color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
+                  errorText: _errorText,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -136,6 +255,7 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                 style: TextStyle(
                   color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
+                onChanged: (value) => _validateInput(value, selectedFormat),
               ),
               SizedBox(height: 40),
               SizedBox(
@@ -144,7 +264,7 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     final content = _textController.text.trim();
-                    if (content.isNotEmpty) {
+                    if (_validateInput(content, selectedFormat)) {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -152,13 +272,6 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
                             content: content,
                             type: _selectedType,
                           ),
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Please enter content'),
-                          backgroundColor: Theme.of(context).colorScheme.error,
                         ),
                       );
                     }
@@ -192,4 +305,18 @@ class _BarcodeScreenState extends State<BarcodeScreen> {
     _textController.dispose();
     super.dispose();
   }
+}
+
+class BarcodeFormat {
+  final String name;
+  final String regex;
+  final int maxLength;
+  final String description;
+
+  const BarcodeFormat({
+    required this.name,
+    required this.regex,
+    required this.maxLength,
+    required this.description,
+  });
 }

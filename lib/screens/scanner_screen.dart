@@ -8,6 +8,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:google_ml_kit/google_ml_kit.dart' as ml_kit;
 import 'dart:io';
 import 'scan_result_screen.dart';
+import 'features/barcode_result_screen.dart';
+import '../services/service_provider.dart';
+import '../models/history_item.dart';
+import '../utils/qr_history_helper.dart';
 
 class ScannerScreen extends StatefulWidget {
   @override
@@ -49,6 +53,75 @@ class _ScannerScreenState extends State<ScannerScreen> {
     });
   }
 
+  bool _isQRCode(String data) {
+    // Check if it's a QR code format
+    return data.startsWith('BEGIN:VCARD') ||
+        data.startsWith('MAILTO:') ||
+        data.startsWith('SMSTO:') ||
+        (Uri.tryParse(data)?.hasScheme ?? false) ||
+        data.contains('\n') || // QR codes often contain line breaks
+        RegExp(r'[^\x20-\x7E]').hasMatch(data); // Contains non-ASCII characters
+  }
+
+  String _detectBarcodeFormat(String data) {
+    // First check if it's a QR code
+    if (_isQRCode(data)) return 'QR';
+
+    // Then check specific barcode formats
+    if (RegExp(r'^\d{13}$').hasMatch(data)) return 'EAN-13';
+    if (RegExp(r'^\d{8}$').hasMatch(data)) return 'EAN-8';
+    if (RegExp(r'^0\d{7}$').hasMatch(data)) return 'UPC-E';
+    if (RegExp(r'^\d{14}$').hasMatch(data)) return 'ITF-14';
+    if (RegExp(r'^[A-Z0-9\-\.\s\$\/\+%]+$').hasMatch(data)) return 'Code 39';
+    if (RegExp(r'^\d{12}$').hasMatch(data)) return 'UPC-A';
+    if (RegExp(r'^[0-9]+$').hasMatch(data)) return 'Code 128';
+
+    return 'Code 128'; // Default to Code 128 for general text
+  }
+
+  Future<void> _handleScannedCode(String code, {File? imageFile}) async {
+    final String format = _detectBarcodeFormat(code);
+
+    if (format == 'QR') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ScanResultScreen(
+            scannedCode: code,
+            qrImage: imageFile,
+          ),
+        ),
+      ).then((_) => controller?.resumeCamera());
+    } else {
+      // Save barcode to history
+      final historyService = ServiceProvider.of(context).historyService;
+      final historyItem = HistoryItem(
+        type: 'scanned',
+        title: 'Barcode : $format',
+        subtitle: code,
+        date: DateTime.now().toString(),
+        iconPath: 'assets/icons/barcode.png',
+        additionalData: {
+          'type': format,
+          'content': code,
+          'isBarcode': true, // Add this flag to explicitly mark as barcode
+        },
+      );
+      await historyService.addItem(historyItem);
+
+      // Navigate to barcode result screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BarcodeResultScreen(
+            content: code,
+            type: format,
+          ),
+        ),
+      ).then((_) => controller?.resumeCamera());
+    }
+  }
+
   Future<void> _pickImage() async {
     if (_isProcessingImage) return;
 
@@ -74,20 +147,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
         if (barcodes.isNotEmpty && mounted) {
           final String? code = barcodes.first.rawValue;
           if (code != null) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ScanResultScreen(
-                  scannedCode: code,
-                  qrImage: imageFile,
-                ),
-              ),
-            );
+            await _handleScannedCode(code, imageFile: imageFile);
           } else {
-            _showError('No QR code found in the image');
+            _showError('No barcode found in the image');
           }
         } else {
-          _showError('No QR code found in the image');
+          _showError('No barcode found in the image');
         }
       }
     } catch (e) {
@@ -118,17 +183,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
-    controller.scannedDataStream.listen((scanData) {
+    controller.scannedDataStream.listen((scanData) async {
       if (scanData.code != null) {
         controller.pauseCamera();
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ScanResultScreen(
-              scannedCode: scanData.code!,
-            ),
-          ),
-        ).then((_) => controller.resumeCamera());
+        await _handleScannedCode(scanData.code!);
       }
     });
   }
