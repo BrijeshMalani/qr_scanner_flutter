@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../utils/qr_history_helper.dart';
+import '../../utils/qr_saver_helper.dart';
 
 class SpotifyScreen extends StatefulWidget {
   @override
@@ -15,6 +16,7 @@ class _SpotifyScreenState extends State<SpotifyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final qrKey = GlobalKey();
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -213,6 +215,7 @@ class _SpotifyResultScreenState extends State<SpotifyResultScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final qrKey = GlobalKey();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
@@ -277,7 +280,8 @@ class _SpotifyResultScreenState extends State<SpotifyResultScreen> {
                   _buildActionButton(
                     icon: Icons.download,
                     label: 'Save QR Image',
-                    onTap: () {},
+                    onTap: () =>
+                        QRSaverHelper.saveQRImage(context, qrKey, 'spotify'),
                   ),
                   _buildActionButton(
                     icon: Icons.qr_code,

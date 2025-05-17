@@ -8,6 +8,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../models/history_item.dart';
 import '../utils/qr_history_helper.dart';
 import '../utils/colors.dart';
+import '../services/service_provider.dart';
+import '../utils/qr_saver_helper.dart';
 
 class QRDetailScreen extends StatefulWidget {
   final HistoryItem item;
@@ -19,6 +21,7 @@ class QRDetailScreen extends StatefulWidget {
 }
 
 class _QRDetailScreenState extends State<QRDetailScreen> {
+  final qrKey = GlobalKey();
   bool get isUrl => Uri.tryParse(_getQRData())?.hasScheme ?? false;
   bool get isVCard => _getQRData().trim().startsWith('BEGIN:VCARD');
   bool get isSMS => _getQRData().trim().startsWith('SMSTO:');
@@ -296,24 +299,27 @@ class _QRDetailScreenState extends State<QRDetailScreen> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: EdgeInsets.all(16),
-                child: QrImageView(
-                  data: _getQRData(),
-                  version: QrVersions.auto,
-                  size: 180,
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppColors.primaryColor,
-                  eyeStyle: QrEyeStyle(
-                    eyeShape: QrEyeShape.square,
-                    color: AppColors.primaryColor,
+              child: RepaintBoundary(
+                key: qrKey,
+                child: Container(
+                  padding: EdgeInsets.all(16),
+                  child: QrImageView(
+                    data: _getQRData(),
+                    version: QrVersions.auto,
+                    size: 180,
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppColors.primaryColor,
+                    eyeStyle: QrEyeStyle(
+                      eyeShape: QrEyeShape.square,
+                      color: AppColors.primaryColor,
+                    ),
+                    dataModuleStyle: QrDataModuleStyle(
+                      dataModuleShape: QrDataModuleShape.square,
+                      color: AppColors.primaryColor,
+                    ),
+                    padding: EdgeInsets.zero,
+                    gapless: true,
                   ),
-                  dataModuleStyle: QrDataModuleStyle(
-                    dataModuleShape: QrDataModuleShape.square,
-                    color: AppColors.primaryColor,
-                  ),
-                  padding: EdgeInsets.zero,
-                  gapless: true,
                 ),
               ),
             ),
@@ -841,18 +847,9 @@ class _QRDetailScreenState extends State<QRDetailScreen> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // TODO: Implement download functionality
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Download started'),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            margin: EdgeInsets.all(16),
-                          ),
-                        );
+                      onPressed: () async {
+                        await QRSaverHelper.saveQRImage(
+                            context, qrKey, 'qr_detail');
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryColor,

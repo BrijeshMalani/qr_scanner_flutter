@@ -8,6 +8,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import '../../utils/qr_history_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:gallery_saver/gallery_saver.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 
 class NotesResultScreen extends StatefulWidget {
   final String title;
@@ -43,18 +45,34 @@ class _NotesResultScreenState extends State<NotesResultScreen> {
 
   Future<void> _saveQRImage(BuildContext context, GlobalKey qrKey) async {
     try {
-      // Request storage permissions
-      Map<Permission, PermissionStatus> statuses = await [
-        Permission.storage,
-        Permission.manageExternalStorage,
-      ].request();
+      // Request appropriate permissions based on Android version
+      if (Platform.isAndroid) {
+        final deviceInfo = DeviceInfoPlugin();
+        final androidInfo = await deviceInfo.androidInfo;
 
-      if (!statuses[Permission.storage]!.isGranted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Storage permission is required to save QR code')),
-        );
-        return;
+        if (androidInfo.version.sdkInt >= 33) {
+          // For Android 13 and above
+          final status = await Permission.photos.request();
+          if (!status.isGranted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content:
+                      Text('Photos permission is required to save QR code')),
+            );
+            return;
+          }
+        } else {
+          // For Android 12 and below
+          final status = await Permission.storage.request();
+          if (!status.isGranted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content:
+                      Text('Storage permission is required to save QR code')),
+            );
+            return;
+          }
+        }
       }
 
       // Capture the QR code image
@@ -77,68 +95,55 @@ class _NotesResultScreenState extends State<NotesResultScreen> {
         return;
       }
 
-      // Try different directories for saving
-      Directory? directory;
-      if (Platform.isAndroid) {
-        directory = Directory('/storage/emulated/0/Download');
-        // Fallback to app's external storage if Download is not accessible
-        if (!await directory.exists()) {
-          directory = await getExternalStorageDirectory();
-        }
-      } else {
-        directory = await getApplicationDocumentsDirectory();
-      }
-
-      if (directory == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not access storage directory')),
-        );
-        return;
-      }
-
-      // Ensure directory exists
-      if (!await directory.exists()) {
-        await directory.create(recursive: true);
-      }
-
-      // Create a unique filename with timestamp
+      // Get temporary directory to save the file first
+      final tempDir = await getTemporaryDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'qr_code_$timestamp.png';
-      final filePath = '${directory.path}/$fileName';
-      final file = File(filePath);
+      final tempFileName = 'qr_code_$timestamp.png';
+      final tempFile = File('${tempDir.path}/$tempFileName');
 
-      // Save the file
-      await file.writeAsBytes(byteData.buffer.asUint8List());
+      // Save to temporary file first
+      await tempFile.writeAsBytes(byteData.buffer.asUint8List());
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('QR Code saved to Downloads'),
-          duration: Duration(seconds: 5),
-          action: SnackBarAction(
-            label: 'View',
-            onPressed: () async {
-              if (Platform.isAndroid) {
-                final uri = Uri.parse(
-                    'content://com.android.externalstorage.documents/document/primary%3ADownload%2F$fileName');
-                try {
-                  await launchUrl(uri);
-                } catch (e) {
-                  // If can't open file directly, try to open the Downloads folder
-                  final folderUri = Uri.parse(
-                      'content://com.android.externalstorage.documents/document/primary%3ADownload');
-                  await launchUrl(folderUri);
+      // Save to gallery
+      final success =
+          await GallerySaver.saveImage(tempFile.path, albumName: 'QR Codes');
+
+      // Delete temporary file
+      if (await tempFile.exists()) {
+        await tempFile.delete();
+      }
+
+      if (success == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('QR Code saved to Gallery in "QR Codes" album'),
+            duration: Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'View',
+              onPressed: () async {
+                if (Platform.isAndroid) {
+                  // Try to open gallery app
+                  final uri =
+                      Uri.parse('content://media/internal/images/media');
+                  try {
+                    await launchUrl(uri);
+                  } catch (e) {
+                    print('Failed to open gallery: $e');
+                  }
                 }
-              }
-            },
+              },
+            ),
           ),
-        ),
-      );
+        );
+      } else {
+        throw Exception('Failed to save to gallery');
+      }
     } catch (e) {
-      print('Error saving QR code: $e'); // Add debug logging
+      print('Error saving QR code: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to save QR Code: ${e.toString()}'),
-          duration: Duration(seconds: 5),
+          duration: Duration(seconds: 3),
         ),
       );
     }

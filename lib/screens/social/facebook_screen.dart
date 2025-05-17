@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../utils/qr_history_helper.dart';
+import '../../utils/qr_saver_helper.dart';
 
 class FacebookScreen extends StatefulWidget {
   @override
@@ -139,6 +140,7 @@ class _FacebookResultScreenState extends State<FacebookResultScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final qrKey = GlobalKey();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
@@ -203,7 +205,8 @@ class _FacebookResultScreenState extends State<FacebookResultScreen> {
                   _buildActionButton(
                     icon: Icons.download,
                     label: 'Save QR Image',
-                    onTap: () {},
+                    onTap: () =>
+                        QRSaverHelper.saveQRImage(context, qrKey, 'facebook'),
                   ),
                   _buildActionButton(
                     icon: Icons.qr_code,
@@ -259,13 +262,7 @@ class _FacebookResultScreenState extends State<FacebookResultScreen> {
           ),
         ),
         SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Theme.of(context).textTheme.bodyMedium?.color,
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 12)),
       ],
     );
   }

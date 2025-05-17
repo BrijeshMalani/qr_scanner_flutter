@@ -8,6 +8,7 @@ import 'dart:io';
 import '../services/service_provider.dart';
 import '../models/history_item.dart';
 import '../utils/colors.dart';
+import '../utils/qr_saver_helper.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ScanResultScreen extends StatefulWidget {
@@ -25,6 +26,7 @@ class ScanResultScreen extends StatefulWidget {
 }
 
 class _ScanResultScreenState extends State<ScanResultScreen> {
+  final qrKey = GlobalKey();
   bool get isUrl => Uri.tryParse(widget.scannedCode)?.hasScheme ?? false;
   bool get isVCard => widget.scannedCode.trim().startsWith('BEGIN:VCARD');
   bool get isSMS => widget.scannedCode.trim().startsWith('SMSTO:');
@@ -362,24 +364,27 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
                       widget.qrImage!,
                       fit: BoxFit.cover,
                     )
-                  : Container(
-                      padding: EdgeInsets.all(16),
-                      child: QrImageView(
-                        data: widget.scannedCode,
-                        version: QrVersions.auto,
-                        size: 180,
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppColors.primaryColor,
-                        eyeStyle: QrEyeStyle(
-                          eyeShape: QrEyeShape.square,
-                          color: AppColors.primaryColor,
+                  : RepaintBoundary(
+                      key: qrKey,
+                      child: Container(
+                        padding: EdgeInsets.all(16),
+                        child: QrImageView(
+                          data: widget.scannedCode,
+                          version: QrVersions.auto,
+                          size: 180,
+                          backgroundColor: Colors.white,
+                          foregroundColor: AppColors.primaryColor,
+                          eyeStyle: QrEyeStyle(
+                            eyeShape: QrEyeShape.square,
+                            color: AppColors.primaryColor,
+                          ),
+                          dataModuleStyle: QrDataModuleStyle(
+                            dataModuleShape: QrDataModuleShape.square,
+                            color: AppColors.primaryColor,
+                          ),
+                          padding: EdgeInsets.zero,
+                          gapless: true,
                         ),
-                        dataModuleStyle: QrDataModuleStyle(
-                          dataModuleShape: QrDataModuleShape.square,
-                          color: AppColors.primaryColor,
-                        ),
-                        padding: EdgeInsets.zero,
-                        gapless: true,
                       ),
                     ),
             ),
@@ -795,18 +800,9 @@ class _ScanResultScreenState extends State<ScanResultScreen> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // TODO: Implement download functionality
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Download started'),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            margin: EdgeInsets.all(16),
-                          ),
-                        );
+                      onPressed: () async {
+                        await QRSaverHelper.saveQRImage(
+                            context, qrKey, 'scan_result');
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryColor,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../mixins/qr_history_mixin.dart';
+import '../../utils/qr_saver_helper.dart';
 
 class InstagramScreen extends StatefulWidget {
   @override
@@ -141,38 +142,36 @@ class _InstagramResultScreenState extends State<InstagramResultScreen>
     required String label,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: Colors.blue[700],
-              size: 24,
-            ),
+    return Column(
+      children: [
+        Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            shape: BoxShape.circle,
           ),
-          SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).textTheme.bodyMedium?.color,
-            ),
+          child: Icon(
+            icon,
+            color: Colors.blue[700],
+            size: 24,
           ),
-        ],
-      ),
+        ),
+        SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+          ),
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final qrKey = GlobalKey();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
@@ -235,7 +234,8 @@ class _InstagramResultScreenState extends State<InstagramResultScreen>
                   _buildActionButton(
                     icon: Icons.download,
                     label: 'Save QR Image',
-                    onTap: () {},
+                    onTap: () =>
+                        QRSaverHelper.saveQRImage(context, qrKey, 'instagram'),
                   ),
                   _buildActionButton(
                     icon: Icons.qr_code,

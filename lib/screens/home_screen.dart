@@ -90,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
           case 'Youtube':
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => YoutubeScreen()),
+              MaterialPageRoute(builder: (context) => YouTubeScreen()),
             );
             break;
           case 'Spotify':

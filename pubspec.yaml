@@ -22,6 +22,8 @@ dependencies:
   contacts_service: ^0.6.3
   provider: ^6.0.5
   barcode_widget: ^2.0.4
+  gallery_saver: ^2.3.2
+  device_info_plus: ^9.1.1
 
 dev_dependencies:
   flutter_test:

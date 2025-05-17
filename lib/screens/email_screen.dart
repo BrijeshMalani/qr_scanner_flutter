@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../utils/qr_history_helper.dart';
+import '../utils/qr_saver_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class EmailScreen extends StatefulWidget {
@@ -253,6 +254,8 @@ class EmailResultScreen extends StatefulWidget {
 }
 
 class _EmailResultScreenState extends State<EmailResultScreen> {
+  final qrKey = GlobalKey();
+
   String get emailData {
     String data = 'MAILTO:${widget.email}';
     if (widget.subject.isNotEmpty || widget.message.isNotEmpty) {
@@ -266,27 +269,6 @@ class _EmailResultScreenState extends State<EmailResultScreen> {
       }
     }
     return data;
-  }
-
-  Future<void> _sendEmail() async {
-    final Uri emailUri = Uri.parse(emailData);
-    if (await canLaunchUrl(emailUri)) {
-      await launchUrl(emailUri);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not launch email app'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: EdgeInsets.all(16),
-          ),
-        );
-      }
-    }
   }
 
   @override
@@ -303,6 +285,10 @@ class _EmailResultScreenState extends State<EmailResultScreen> {
         'message': widget.message,
       },
     );
+  }
+
+  Future<void> _saveQRImage() async {
+    await QRSaverHelper.saveQRImage(context, qrKey, 'email');
   }
 
   @override
@@ -361,10 +347,13 @@ class _EmailResultScreenState extends State<EmailResultScreen> {
                   color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: QrImageView(
-                  data: emailData,
-                  size: 200,
-                  backgroundColor: Colors.white,
+                child: RepaintBoundary(
+                  key: qrKey,
+                  child: QrImageView(
+                    data: emailData,
+                    size: 200,
+                    backgroundColor: Colors.white,
+                  ),
                 ),
               ),
               SizedBox(height: 30),
@@ -374,12 +363,12 @@ class _EmailResultScreenState extends State<EmailResultScreen> {
                   _buildActionButton(
                     icon: Icons.download,
                     label: 'Save QR',
-                    onTap: () {},
+                    onTap: _saveQRImage,
                   ),
                   _buildActionButton(
                     icon: Icons.send,
                     label: 'Send Email',
-                    onTap: _sendEmail,
+                    onTap: () {},
                   ),
                   _buildActionButton(
                     icon: Icons.qr_code,

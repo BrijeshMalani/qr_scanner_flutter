@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import '../utils/qr_history_helper.dart';
+import '../utils/qr_saver_helper.dart';
 
 class ContactScreen extends StatefulWidget {
   @override
@@ -200,6 +201,8 @@ class ContactResultScreen extends StatefulWidget {
 }
 
 class _ContactResultScreenState extends State<ContactResultScreen> {
+  final qrKey = GlobalKey();
+
   String get vCardData {
     return '''BEGIN:VCARD
 VERSION:3.0
@@ -231,12 +234,8 @@ END:VCARD''';
     );
   }
 
-  Future<void> _saveQRImage(BuildContext context, String qrData) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final path = directory.path;
-    final file = File('$path/qr_code.png');
-
-    // Save QR code implementation here
+  Future<void> _saveQRImage() async {
+    await QRSaverHelper.saveQRImage(context, qrKey, 'contact');
   }
 
   @override
@@ -284,23 +283,26 @@ END:VCARD''';
               Container(
                 padding: EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
+                  color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: QrImageView(
-                  data: vCardData,
-                  size: 200,
-                  backgroundColor: Colors.white,
+                child: RepaintBoundary(
+                  key: qrKey,
+                  child: QrImageView(
+                    data: vCardData,
+                    size: 200,
+                    backgroundColor: Colors.white,
+                  ),
                 ),
               ),
-              SizedBox(height: 24),
+              SizedBox(height: 30),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _buildActionButton(
                     icon: Icons.download,
                     label: 'Save QR Image',
-                    onTap: () => _saveQRImage(context, vCardData),
+                    onTap: _saveQRImage,
                   ),
                   _buildActionButton(
                     icon: Icons.qr_code,

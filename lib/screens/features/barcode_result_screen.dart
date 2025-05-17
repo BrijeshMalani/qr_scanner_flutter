@@ -8,6 +8,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../utils/qr_history_helper.dart';
+import '../../utils/qr_saver_helper.dart';
 
 class BarcodeResultScreen extends StatefulWidget {
   final String content;
@@ -392,74 +393,7 @@ class _BarcodeResultScreenState extends State<BarcodeResultScreen> {
   }
 
   Future<void> _saveQRImage(BuildContext context, GlobalKey qrKey) async {
-    try {
-      // Request storage permission
-      final status = await Permission.storage.request();
-      if (!status.isGranted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Storage permission is required to save barcode')),
-        );
-        return;
-      }
-
-      final boundary =
-          qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to capture barcode')),
-        );
-        return;
-      }
-
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-
-      if (byteData == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to process barcode image')),
-        );
-        return;
-      }
-
-      // Get the downloads directory
-      final directory = await getExternalStorageDirectory();
-      if (directory == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not access storage directory')),
-        );
-        return;
-      }
-
-      // Create a unique filename with timestamp
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final imagePath =
-          '${directory.path}/barcode_${widget.type}_$timestamp.png';
-      final buffer = byteData.buffer.asUint8List();
-      final file = File(imagePath);
-
-      await file.writeAsBytes(buffer);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Barcode saved successfully to Downloads'),
-          action: SnackBarAction(
-            label: 'View',
-            onPressed: () async {
-              // Try to open the containing folder
-              final uri = Uri.file(directory.path);
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri);
-              }
-            },
-          ),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save barcode: $e')),
-      );
-    }
+    await QRSaverHelper.saveQRImage(context, qrKey, 'barcode');
   }
 
   @override

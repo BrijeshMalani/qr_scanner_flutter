@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../utils/qr_history_helper.dart';
+import '../../utils/qr_saver_helper.dart';
 
-class YoutubeScreen extends StatefulWidget {
+class YouTubeScreen extends StatefulWidget {
   @override
-  _YoutubeScreenState createState() => _YoutubeScreenState();
+  _YouTubeScreenState createState() => _YouTubeScreenState();
 }
 
-class _YoutubeScreenState extends State<YoutubeScreen> {
+class _YouTubeScreenState extends State<YouTubeScreen> {
   final _formKey = GlobalKey<FormState>();
-  String videoUrl = '';
+  String videoId = '';
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +26,7 @@ class _YoutubeScreenState extends State<YoutubeScreen> {
         ),
         title: Text(
           'YouTube',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
       ),
       body: SingleChildScrollView(
@@ -40,7 +41,7 @@ class _YoutubeScreenState extends State<YoutubeScreen> {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: Color(0xFFFFE7E7),
+                      color: Color(0xFFFFE0E0),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Padding(
@@ -59,18 +60,33 @@ class _YoutubeScreenState extends State<YoutubeScreen> {
                 SizedBox(height: 32),
                 TextFormField(
                   decoration: InputDecoration(
-                    hintText: 'Video URL or Channel URL',
+                    hintText: 'Video ID or URL',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter YouTube URL';
+                      return 'Please enter video ID or URL';
                     }
                     return null;
                   },
-                  onSaved: (value) => videoUrl = value ?? '',
+                  onSaved: (value) {
+                    if (value != null) {
+                      // Extract video ID from URL if full URL is provided
+                      if (value.contains('youtube.com') ||
+                          value.contains('youtu.be')) {
+                        final uri = Uri.parse(value);
+                        if (value.contains('youtube.com')) {
+                          videoId = uri.queryParameters['v'] ?? value;
+                        } else {
+                          videoId = uri.pathSegments.last;
+                        }
+                      } else {
+                        videoId = value;
+                      }
+                    }
+                  },
                 ),
                 SizedBox(height: 32),
                 SizedBox(
@@ -84,8 +100,7 @@ class _YoutubeScreenState extends State<YoutubeScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => YouTubeResultScreen(
-                              videoId: videoUrl,
-                              type: 'video',
+                              videoId: videoId,
                             ),
                           ),
                         );
@@ -96,7 +111,7 @@ class _YoutubeScreenState extends State<YoutubeScreen> {
                       style: TextStyle(color: Colors.white),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[700],
+                      backgroundColor: Colors.red,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(25),
                       ),
@@ -114,12 +129,10 @@ class _YoutubeScreenState extends State<YoutubeScreen> {
 
 class YouTubeResultScreen extends StatefulWidget {
   final String videoId;
-  final String type; // 'video', 'channel', or 'playlist'
 
   const YouTubeResultScreen({
     Key? key,
     required this.videoId,
-    required this.type,
   }) : super(key: key);
 
   @override
@@ -127,18 +140,7 @@ class YouTubeResultScreen extends StatefulWidget {
 }
 
 class _YouTubeResultScreenState extends State<YouTubeResultScreen> {
-  String get youtubeData {
-    switch (widget.type) {
-      case 'video':
-        return 'https://www.youtube.com/watch?v=${widget.videoId}';
-      case 'channel':
-        return 'https://www.youtube.com/channel/${widget.videoId}';
-      case 'playlist':
-        return 'https://www.youtube.com/playlist?list=${widget.videoId}';
-      default:
-        return widget.videoId;
-    }
-  }
+  String get youtubeData => 'https://youtu.be/${widget.videoId}';
 
   @override
   void initState() {
@@ -148,15 +150,13 @@ class _YouTubeResultScreenState extends State<YouTubeResultScreen> {
       title: 'YouTube',
       content: youtubeData,
       iconPath: 'assets/icons/youtube.png',
-      additionalData: {
-        'type': widget.type,
-        'id': widget.videoId,
-      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final qrKey = GlobalKey();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
@@ -181,7 +181,7 @@ class _YouTubeResultScreenState extends State<YouTubeResultScreen> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: Color(0xFFFFE7E7),
+                    color: Color(0xFFFFE0E0),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Padding(
@@ -208,10 +208,13 @@ class _YouTubeResultScreenState extends State<YouTubeResultScreen> {
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: QrImageView(
-                  data: youtubeData,
-                  size: 200,
-                  backgroundColor: Colors.white,
+                child: RepaintBoundary(
+                  key: qrKey,
+                  child: QrImageView(
+                    data: youtubeData,
+                    size: 200,
+                    backgroundColor: Colors.white,
+                  ),
                 ),
               ),
               SizedBox(height: 24),
@@ -221,7 +224,8 @@ class _YouTubeResultScreenState extends State<YouTubeResultScreen> {
                   _buildActionButton(
                     icon: Icons.download,
                     label: 'Save QR Image',
-                    onTap: () {},
+                    onTap: () =>
+                        QRSaverHelper.saveQRImage(context, qrKey, 'youtube'),
                   ),
                   _buildActionButton(
                     icon: Icons.qr_code,
@@ -268,7 +272,7 @@ class _YouTubeResultScreenState extends State<YouTubeResultScreen> {
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: Colors.blue[700],
+            color: Colors.red,
             shape: BoxShape.circle,
           ),
           child: IconButton(

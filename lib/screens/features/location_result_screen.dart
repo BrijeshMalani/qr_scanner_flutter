@@ -6,6 +6,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import '../../utils/qr_history_helper.dart';
+import '../../utils/qr_saver_helper.dart';
 
 class LocationResultScreen extends StatefulWidget {
   final double latitude;
@@ -44,28 +45,7 @@ class _LocationResultScreenState extends State<LocationResultScreen> {
   }
 
   Future<void> _saveQRImage(BuildContext context, GlobalKey qrKey) async {
-    try {
-      final boundary =
-          qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary != null) {
-        final image = await boundary.toImage(pixelRatio: 3.0);
-        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-        if (byteData != null) {
-          final directory = await getApplicationDocumentsDirectory();
-          final imagePath = '${directory.path}/location_qr.png';
-          final buffer = byteData.buffer.asUint8List();
-          final file = File(imagePath);
-          await file.writeAsBytes(buffer);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('QR Code saved successfully!')),
-          );
-        }
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save QR Code')),
-      );
-    }
+    await QRSaverHelper.saveQRImage(context, qrKey, 'location');
   }
 
   @override

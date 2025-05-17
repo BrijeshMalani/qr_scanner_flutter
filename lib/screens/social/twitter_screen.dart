@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../utils/qr_history_helper.dart';
+import '../../utils/qr_saver_helper.dart';
 
 class TwitterScreen extends StatefulWidget {
   @override
@@ -139,6 +140,7 @@ class _TwitterResultScreenState extends State<TwitterResultScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final qrKey = GlobalKey();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
@@ -203,7 +205,8 @@ class _TwitterResultScreenState extends State<TwitterResultScreen> {
                   _buildActionButton(
                     icon: Icons.download,
                     label: 'Save QR Image',
-                    onTap: () {},
+                    onTap: () =>
+                        QRSaverHelper.saveQRImage(context, qrKey, 'twitter'),
                   ),
                   _buildActionButton(
                     icon: Icons.qr_code,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../utils/qr_history_helper.dart';
+import '../utils/qr_saver_helper.dart';
 
 class SMSScreen extends StatefulWidget {
   const SMSScreen({Key? key}) : super(key: key);
@@ -208,6 +209,8 @@ class SMSResultScreen extends StatefulWidget {
 }
 
 class _SMSResultScreenState extends State<SMSResultScreen> {
+  final qrKey = GlobalKey();
+
   String get smsData => 'SMSTO:${widget.phoneNumber}:${widget.message}';
 
   @override
@@ -223,6 +226,10 @@ class _SMSResultScreenState extends State<SMSResultScreen> {
         'message': widget.message,
       },
     );
+  }
+
+  Future<void> _saveQRImage() async {
+    await QRSaverHelper.saveQRImage(context, qrKey, 'sms');
   }
 
   @override
@@ -281,10 +288,13 @@ class _SMSResultScreenState extends State<SMSResultScreen> {
                   color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: QrImageView(
-                  data: smsData,
-                  size: 200,
-                  backgroundColor: Colors.white,
+                child: RepaintBoundary(
+                  key: qrKey,
+                  child: QrImageView(
+                    data: smsData,
+                    size: 200,
+                    backgroundColor: Colors.white,
+                  ),
                 ),
               ),
               SizedBox(height: 30),
@@ -294,7 +304,7 @@ class _SMSResultScreenState extends State<SMSResultScreen> {
                   _buildActionButton(
                     icon: Icons.download,
                     label: 'Save QR Image',
-                    onTap: () {},
+                    onTap: _saveQRImage,
                   ),
                   _buildActionButton(
                     icon: Icons.qr_code,
