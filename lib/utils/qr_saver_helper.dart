@@ -14,23 +14,25 @@ class QRSaverHelper {
     try {
       print('Starting QR image save process...');
 
-      // Check Android version and request appropriate permissions
-      final deviceInfo = await DeviceInfoPlugin().androidInfo;
-      final androidVersion = deviceInfo.version.sdkInt;
-      print('Android version: $androidVersion');
-
       bool permissionGranted = false;
 
-      if (androidVersion >= 33) {
-        // Android 13 and above: Request Photos permission
-        print('Requesting Photos permission for Android 13+');
+      if (Platform.isAndroid) {
+        // Android permission handling
+        final deviceInfo = await DeviceInfoPlugin().androidInfo;
+        final androidVersion = deviceInfo.version.sdkInt;
+        print('Android version: $androidVersion');
+
+        if (androidVersion >= 33) {
+          print('Requesting Photos permission for Android 13+');
+          permissionGranted = await Permission.photos.request().isGranted;
+        } else {
+          print('Requesting Storage permission for Android 12 or below');
+          permissionGranted = await Permission.storage.request().isGranted;
+        }
+      } else if (Platform.isIOS) {
+        // iOS permission handling
+        print('Requesting Photos permission for iOS');
         permissionGranted = await Permission.photos.request().isGranted;
-        print('Photos permission granted: $permissionGranted');
-      } else {
-        // Android 12 and below: Request Storage permission
-        print('Requesting Storage permission for Android 12 or below');
-        permissionGranted = await Permission.storage.request().isGranted;
-        print('Storage permission granted: $permissionGranted');
       }
 
       if (!permissionGranted) {
@@ -38,7 +40,7 @@ class QRSaverHelper {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
                 content:
-                    Text('Storage permission is required to save QR code')),
+                    Text('Photo library access is required to save QR code')),
           );
         }
         return;
@@ -88,8 +90,12 @@ class QRSaverHelper {
 
       // Save to gallery
       print('Attempting to save to gallery...');
-      final success =
-          await GallerySaver.saveImage(tempFile.path, albumName: 'QR Codes');
+      final success = await GallerySaver.saveImage(
+        tempFile.path,
+        albumName:
+            Platform.isIOS ? 'QR Codes' : null, // Album name only for iOS
+        toDcim: Platform.isAndroid, // Save to DCIM on Android
+      );
       print('Gallery save result: $success');
 
       // Clean up temporary file
@@ -103,20 +109,22 @@ class QRSaverHelper {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('QR code saved to gallery'),
-              action: SnackBarAction(
-                label: 'View',
-                onPressed: () async {
-                  // Try to open gallery
-                  final galleryDir =
-                      Directory('/storage/emulated/0/Pictures/QR Codes');
-                  if (await galleryDir.exists()) {
-                    final uri = Uri.file(galleryDir.path);
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri);
-                    }
-                  }
-                },
-              ),
+              action: Platform.isAndroid
+                  ? SnackBarAction(
+                      label: 'View',
+                      onPressed: () async {
+                        // Try to open gallery (Android only)
+                        final galleryDir =
+                            Directory('/storage/emulated/0/Pictures/QR Codes');
+                        if (await galleryDir.exists()) {
+                          final uri = Uri.file(galleryDir.path);
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(uri);
+                          }
+                        }
+                      },
+                    )
+                  : null,
             ),
           );
         }
