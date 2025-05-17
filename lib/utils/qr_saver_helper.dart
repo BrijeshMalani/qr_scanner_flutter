@@ -12,17 +12,25 @@ class QRSaverHelper {
   static Future<void> saveQRImage(
       BuildContext context, GlobalKey qrKey, String type) async {
     try {
+      print('Starting QR image save process...');
+
       // Check Android version and request appropriate permissions
       final deviceInfo = await DeviceInfoPlugin().androidInfo;
       final androidVersion = deviceInfo.version.sdkInt;
+      print('Android version: $androidVersion');
+
       bool permissionGranted = false;
 
       if (androidVersion >= 33) {
         // Android 13 and above: Request Photos permission
+        print('Requesting Photos permission for Android 13+');
         permissionGranted = await Permission.photos.request().isGranted;
+        print('Photos permission granted: $permissionGranted');
       } else {
         // Android 12 and below: Request Storage permission
+        print('Requesting Storage permission for Android 12 or below');
         permissionGranted = await Permission.storage.request().isGranted;
+        print('Storage permission granted: $permissionGranted');
       }
 
       if (!permissionGranted) {
@@ -36,10 +44,15 @@ class QRSaverHelper {
         return;
       }
 
+      print('Capturing QR code image...');
+      // Add a small delay to ensure widget is rendered
+      await Future.delayed(Duration(milliseconds: 300));
+
       // Capture QR code image
       final boundary =
           qrKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) {
+        print('Error: Failed to get RenderRepaintBoundary');
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to capture QR code')),
@@ -49,9 +62,13 @@ class QRSaverHelper {
       }
 
       final image = await boundary.toImage(pixelRatio: 3.0);
+      print('QR code captured as image');
+
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      print('Image converted to bytes');
 
       if (byteData == null) {
+        print('Error: Failed to get image byte data');
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to process QR code image')),
@@ -64,15 +81,21 @@ class QRSaverHelper {
       final tempDir = await getTemporaryDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final tempFile = File('${tempDir.path}/qr_${type}_$timestamp.png');
+      print('Saving to temporary file: ${tempFile.path}');
+
       await tempFile.writeAsBytes(byteData.buffer.asUint8List());
+      print('Temporary file created');
 
       // Save to gallery
+      print('Attempting to save to gallery...');
       final success =
           await GallerySaver.saveImage(tempFile.path, albumName: 'QR Codes');
+      print('Gallery save result: $success');
 
       // Clean up temporary file
       if (await tempFile.exists()) {
         await tempFile.delete();
+        print('Temporary file deleted');
       }
 
       if (success == true) {
@@ -98,6 +121,7 @@ class QRSaverHelper {
           );
         }
       } else {
+        print('Error: Gallery save returned false');
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to save QR code to gallery')),
@@ -105,6 +129,7 @@ class QRSaverHelper {
         }
       }
     } catch (e) {
+      print('Error in saveQRImage: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving QR code: $e')),

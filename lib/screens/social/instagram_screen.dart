@@ -123,6 +123,7 @@ class InstagramResultScreen extends StatefulWidget {
 
 class _InstagramResultScreenState extends State<InstagramResultScreen>
     with QRHistoryMixin {
+  final qrKey = GlobalKey();
   String get instagramData => 'https://www.instagram.com/${widget.username}';
 
   @override
@@ -171,7 +172,6 @@ class _InstagramResultScreenState extends State<InstagramResultScreen>
 
   @override
   Widget build(BuildContext context) {
-    final qrKey = GlobalKey();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
@@ -215,16 +215,21 @@ class _InstagramResultScreenState extends State<InstagramResultScreen>
                 style: TextStyle(color: Colors.grey),
               ),
               SizedBox(height: 24),
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: QrImageView(
-                  data: instagramData,
-                  size: 200,
-                  backgroundColor: Colors.white,
+              RepaintBoundary(
+                key: qrKey,
+                child: Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: QrImageView(
+                    data: instagramData,
+                    version: QrVersions.auto,
+                    size: 200,
+                    backgroundColor: Colors.white,
+                    padding: EdgeInsets.zero,
+                  ),
                 ),
               ),
               SizedBox(height: 24),
