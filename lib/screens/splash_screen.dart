@@ -23,10 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
       if (isFirstLaunch) {
         // Set first launch to false
         prefs.setBool('is_first_launch', false);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => OnboardingScreen()),
-        );
+        Navigator.pushReplacementNamed(context, '/onboarding');
       } else {
         Navigator.pushReplacement(
           context,

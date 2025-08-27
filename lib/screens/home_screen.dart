@@ -49,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
             label,
             style: TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w800,
               color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
             textAlign: TextAlign.center,
@@ -120,7 +120,8 @@ class _HomeScreenState extends State<HomeScreen> {
             title,
             style: TextStyle(
               fontSize: 12,
-              color: Theme.of(context).textTheme.bodyMedium?.color,
+              fontWeight: FontWeight.w800,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
             ),
           ),
         ],
@@ -131,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildPopularItem(
       String title, String subtitle, IconData icon, Color backgroundColor) {
     return Container(
-      width: 160,
+      width: 145,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: backgroundColor.withOpacity(0.1),
@@ -146,13 +147,13 @@ class _HomeScreenState extends State<HomeScreen> {
               color: backgroundColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: backgroundColor),
+            child: Icon(icon, color: backgroundColor, size: 30),
           ),
           const SizedBox(height: 12),
           Text(
             title,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               color: Theme.of(context).textTheme.titleLarge?.color,
             ),
@@ -291,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Colors.pink,
                           ),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 12),
                         InkWell(
                           onTap: () {
                             Navigator.push(
@@ -307,7 +308,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Colors.blue,
                           ),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 12),
                         InkWell(
                           onTap: () {
                             Navigator.push(
@@ -318,7 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                           child: _buildPopularItem(
                             'Send Email',
-                            'Send Email AddressAnytime',
+                            'Send Email Address Anytime',
                             Icons.email,
                             Colors.green,
                           ),
